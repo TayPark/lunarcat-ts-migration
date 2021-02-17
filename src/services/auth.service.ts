@@ -2,7 +2,7 @@ import { User } from '../interfaces/users.interface';
 import HttpException from '../lib/httpException';
 import userModel from '../models/users.model';
 
-export class AuthService {
+class AuthService {
   public users = userModel;
 
   public async findAll(): Promise<User[]> {
@@ -12,24 +12,22 @@ export class AuthService {
 
   public async findById(userId: string): Promise<User> {
     const targetUser: User = await this.users.findOne({ _id: userId });
-
     return targetUser;
   }
 
   public async findByEmail(userEmail: string): Promise<User> {
     const findUser: User = await this.users.findOne({ email: userEmail });
-    
     return findUser;
   }
 
   public async login(email: string, password: string): Promise<User> {
     const findUser: User = await this.users.findOne({ email, password });
-
     return findUser;
   }
 
   public async findByUserDto(userData: Partial<User>): Promise<User> {
-    return await this.users.findOne({ ...userData });
+    const findUser: User = await this.users.findOne({ ...userData });
+    return findUser;
   }
 
   public async createUser(userData: Partial<User>): Promise<User> {
@@ -38,6 +36,7 @@ export class AuthService {
     }
 
     const findUser: User = await this.users.findOne({ email: userData.email });
+
     if (findUser) {
       throw new HttpException(409, `Duplicated email ${userData.email}`);
     }
@@ -69,3 +68,5 @@ export class AuthService {
     return deleteUser;
   }
 }
+
+export default AuthService;

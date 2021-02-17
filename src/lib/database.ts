@@ -11,6 +11,7 @@ const options = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true,
+  useFindAndModify: true,
 };
 
 const dbEnvironment =

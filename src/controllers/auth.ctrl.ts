@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import { NextFunction, Request, Response } from 'express';
 
 import { CreateUserDto, LoginDto } from '../dtos/users.dto';
-import { AuthService } from '../services/auth.service';
+import AuthService from '../services/auth.service';
 import transporter, { emailText, findPassText } from '../lib/sendMail';
 import { User } from '../interfaces/users.interface';
 import HttpException from '../lib/httpException';
@@ -77,10 +77,12 @@ export class AuthController {
                 logger.info(`Sended mail to ${userData.email}`);
                 res.status(201).json({ result: 'ok', message: 'Mail sent' });
               } catch (e) {
-                next(new HttpException(
-                  500,
-                  `Failed to send mail for ${userData.email} when processing ${req.originalUrl}`
-                ));
+                next(
+                  new HttpException(
+                    500,
+                    `Failed to send mail for ${userData.email} when processing ${req.originalUrl}`
+                  )
+                );
               }
             }
           } else {
@@ -99,7 +101,7 @@ export class AuthController {
 
   /**
    * @description 로그인
-   * @since 2021.02.17 ~
+   * @since 2021.02.18 ~
    * @author taypark
    * @access POST /auth/login
    */
@@ -153,7 +155,37 @@ export class AuthController {
 
   public snsLogin = async (req: Request, res: Response, next: NextFunction) => {};
 
-  public sendMailToFindPassword = async (req: Request, res: Response, next: NextFunction) => {};
+  /**
+   * @description 비밀번호 변경을 위한 인증 이메일 발송
+   * @since 2021.02.18 ~
+   * @author taypark
+   * @access POST /auth/findPass
+   */
+  public sendMailToFindPassword = async (req: Request, res: Response, next: NextFunction) => {
+    const email: string = req.body.email;
+
+    const targetUser: User = await this.authService.findByEmail(email);
+
+    if (!targetUser) {
+      next(new HttpException(404, 'User not found'))
+    }
+
+    const userToken = await (await this.randomBytes(24)).toString('hex');
+    const option = {
+      from: this.MAIL_USER,
+      to: email,
+      subject: '비밀번호 재설정을 위해 이메일 인증을 완료해주세요!',
+      html: findPassText(email, userToken),
+    };
+
+    try {
+      await this.authService.updateUser(targetUser._id, { token: userToken });
+      transporter.sendMail(option);
+      res.status(200).json({ result: 'ok', message: 'Find account mail sent' });
+    } catch (e) {
+      next(e);
+    }
+  };
 
   public findPassword = async (req: Request, res: Response, next: NextFunction) => {};
 
