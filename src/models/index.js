@@ -1,9 +1,0 @@
-export { default as Board } from './board';
-export { default as Bookmark } from './bookmark';
-export { default as Feedback } from './feedback';
-export { default as Like } from './like';
-export { default as Follow } from './follow';
-export { default as Notification } from './notification';
-export { default as React } from './react';
-export { default as Reply } from './reply';
-export { default as User } from './user';

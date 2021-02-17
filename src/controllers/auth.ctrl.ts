@@ -1,0 +1,124 @@
+import axios from 'axios';
+import crypto from 'crypto';
+import util from 'util';
+import jwt from 'jsonwebtoken';
+import { NextFunction, Request, Response } from 'express';
+
+import { CreateUserDto } from '../dtos/users.dto';
+import { AuthService } from '../services/auth.service';
+import transporter, { emailText, findPassText } from '../lib/sendMail';
+import HttpException from '../lib/httpException';
+import { logger } from '../configs/winston';
+
+export class AuthController {
+  private authService: AuthService = new AuthService();
+
+  private SECRET_KEY = process.env.SECRET_KEY;
+  private EXEC_NUM = process.env.EXEC_NUM;
+  private RESULT_LENGTH = process.env.RESULT_LENGTH;
+  private JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN;
+  private MAIL_USER = process.env.MAIL_USER;
+
+  private randomBytes = util.promisify(crypto.randomBytes);
+
+  /**
+   * @description 회원가입
+   * @since 2021.02.17 ~
+   * @author taypark
+   * @route /auth/join
+   * @param req HTTP request
+   * @param res HTTP response
+   * @param next Express NextFunction
+   */
+  public join = async (req: Request, res: Response, next: NextFunction) => {
+    const userData: CreateUserDto = req.body;
+
+    const userPassRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/.test(
+      userData.userPw
+    );
+
+    try {
+      if (userPassRegex) {
+        if (userData.userPw === userData.userPwRe) {
+          if (!(await this.authService.findByEmail(userData.email))) {
+            const generatedId: string = crypto
+              .createHash('sha256')
+              .update(userData.email)
+              .digest('hex')
+              .slice(0, 14);
+            const salt: Buffer = await this.randomBytes(64);
+            const cryptedPassword: Buffer = crypto.pbkdf2Sync(
+              userData.userPw,
+              salt.toString('base64'),
+              parseInt(this.EXEC_NUM, 10),
+              parseInt(this.RESULT_LENGTH, 10),
+              'sha512'
+            );
+            const authToken = cryptedPassword.toString('hex').slice(0, 24);
+            const createUser = await this.authService.createUser({
+              email: userData.email,
+              nickname: userData.userNick,
+              screenId: generatedId,
+              password: cryptedPassword.toString('base64'),
+              salt: salt.toString('base64'),
+              token: authToken,
+              displayLanguage: parseInt(userData.userLang, 10),
+            });
+
+            if (createUser) {
+              const mailOption = {
+                from: this.MAIL_USER,
+                to: userData.email,
+                subject: '이메일 인증을 완료해주세요.',
+                html: emailText(userData.email, authToken),
+              };
+              try {
+                await transporter.sendMail(mailOption);
+                logger.info(`Sended mail to ${userData.email}`);
+                res.status(201).json({ result: 'ok', message: 'Mail sent' });
+              } catch (e) {
+                throw new HttpException(
+                  500,
+                  `Failed to send mail for ${userData.email} when processing ${req.originalUrl}`
+                );
+              }
+            }
+          } else {
+            throw new HttpException(409, 'Duplicated email');
+          }
+        } else {
+          throw new HttpException(400, 'Passwords are not matched');
+        }
+      } else {
+        throw new HttpException(400, 'Check password rule');
+      }
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  public login = async (req: Request, res: Response, next: NextFunction) => {};
+
+  public logout = async (req: Request, res: Response, next: NextFunction) => {};
+
+  public snsLogin = async (req: Request, res: Response, next: NextFunction) => {};
+
+  public sendMailToFindPassword = async (req: Request, res: Response, next: NextFunction) => {};
+
+  public findPassword = async (req: Request, res: Response, next: NextFunction) => {};
+
+  public mailAuth = async (req: Request, res: Response, next: NextFunction) => {};
+
+  private getFbProfile = async uid => {
+    try {
+      const fbProfileImage = await axios({
+        url: `https://graph.facebook.com/v9.0/${uid}/picture`,
+        method: 'GET',
+      });
+
+      return fbProfileImage;
+    } catch (e) {
+      throw new Error(e);
+    }
+  };
+}

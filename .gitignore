@@ -21,3 +21,6 @@ logs
 
 # mongodb key
 mongodb.key
+
+# build
+build
