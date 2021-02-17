@@ -2,13 +2,13 @@ import 'dotenv/config';
 import mailer from 'nodemailer';
 import AWS from 'aws-sdk';
 
-const { AWS_SES_ID, AWS_SES_SECRET, AWA_SES_REGION } = process.env;
+const { AWS_SES_ID, AWS_SES_SECRET, AWS_SES_REGION } = process.env;
 
 const SES = new AWS.SES({
   apiVersion: '2010-12-01',
   accessKeyId: AWS_SES_ID,
   secretAccessKey: AWS_SES_SECRET,
-  region: AWA_SES_REGION,
+  region: AWS_SES_REGION,
 });
 
 const transporter = mailer.createTransport({ SES });

@@ -9,6 +9,7 @@ import { AuthService } from '../services/auth.service';
 import transporter, { emailText, findPassText } from '../lib/sendMail';
 import HttpException from '../lib/httpException';
 import { logger } from '../configs/winston';
+import { transport } from 'winston';
 
 export class AuthController {
   private authService: AuthService = new AuthService();
@@ -25,10 +26,7 @@ export class AuthController {
    * @description 회원가입
    * @since 2021.02.17 ~
    * @author taypark
-   * @route /auth/join
-   * @param req HTTP request
-   * @param res HTTP response
-   * @param next Express NextFunction
+   * @route POST /auth/join
    */
   public join = async (req: Request, res: Response, next: NextFunction) => {
     const userData: CreateUserDto = req.body;
@@ -72,8 +70,9 @@ export class AuthController {
                 subject: '이메일 인증을 완료해주세요.',
                 html: emailText(userData.email, authToken),
               };
+              
               try {
-                await transporter.sendMail(mailOption);
+                transporter.sendMail(mailOption);
                 logger.info(`Sended mail to ${userData.email}`);
                 res.status(201).json({ result: 'ok', message: 'Mail sent' });
               } catch (e) {
@@ -97,6 +96,12 @@ export class AuthController {
     }
   };
 
+  /**
+   * @description 로그인
+   * @since 2021.02.17 ~
+   * @author taypark
+   * @access POST /auth/login
+   */
   public login = async (req: Request, res: Response, next: NextFunction) => {};
 
   public logout = async (req: Request, res: Response, next: NextFunction) => {};

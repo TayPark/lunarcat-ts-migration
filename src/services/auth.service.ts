@@ -12,19 +12,13 @@ export class AuthService {
 
   public async findById(userId: string): Promise<User> {
     const targetUser: User = await this.users.findOne({ _id: userId });
-    if (!targetUser) {
-      throw new HttpException(404, 'User not found');
-    }
 
     return targetUser;
   }
 
   public async findByEmail(userEmail: string): Promise<User> {
     const findUser: User = await this.users.findOne({ email: userEmail });
-    if (!findUser) {
-      throw new HttpException(404, 'User not found');
-    }
-
+    
     return findUser;
   }
 

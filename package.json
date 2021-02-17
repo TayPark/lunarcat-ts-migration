@@ -6,7 +6,7 @@
     "start": "yarn build && cross-env NODE_ENV=production node build/server.js",
     "dev": "cross-env NODE_ENV=development nodemon",
     "build": "tsc",
-    "docker": "yarn install && yarn build && cross-env NODE_ENV=production nodemon",
+    "docker": "yarn install && yarn build && cross-env NODE_ENV=development nodemon",
     "format": "prettier --write \"src/**/*.ts\" \"__tests__/**/*.js\"",
     "lint": "eslint --fix \"src/**/*.ts\" \"__tests__/**/*.test.js\"",
     "lint:init": "eslint --init",
