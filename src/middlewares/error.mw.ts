@@ -5,11 +5,10 @@ import HttpException from '../lib/httpException';
 import { logger } from '../configs/winston';
 
 const errorMiddleware = (error: HttpException, req: Request, res: Response, next: NextFunction) => {
-  console.error(error)
+  const status: number = error.status || 500;
+  const message: string = error.message || 'Something went wrong';
+  
   try {
-    const status: number = error.status || 500;
-    const message: string = error.message || 'Something went wrong';
-
     // Only alert on 500 error
     if (process.env.NODE_ENV === 'production' && error.status === 500) {
       const slack = new Slack();
@@ -24,7 +23,7 @@ const errorMiddleware = (error: HttpException, req: Request, res: Response, next
       );
     }
     logger.error(`StatusCode : ${status}, Message : ${message}`);
-    res.status(status).json({ message });
+    res.status(status).json({ result: 'error', status, message });
   } catch (error) {
     next(error);
   }

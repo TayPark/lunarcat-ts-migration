@@ -9,5 +9,6 @@
       "src/**/*.ts",
       "apidoc.yaml"
   ],
-  "ext": "ts"
+  "ext": "ts",
+  "exec": "ts-node ./src/server.ts"
 } 

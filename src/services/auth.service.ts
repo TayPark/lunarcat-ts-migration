@@ -22,6 +22,16 @@ export class AuthService {
     return findUser;
   }
 
+  public async login(email: string, password: string): Promise<User> {
+    const findUser: User = await this.users.findOne({ email, password });
+
+    return findUser;
+  }
+
+  public async findByUserDto(userData: Partial<User>): Promise<User> {
+    return await this.users.findOne({ ...userData });
+  }
+
   public async createUser(userData: Partial<User>): Promise<User> {
     if (!userData) {
       throw new HttpException(400, 'Input data is not satisfied');

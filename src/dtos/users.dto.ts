@@ -32,6 +32,14 @@ export class UpdateUserDto {
   public profile?: object;
 }
 
+export class LoginDto {
+  @IsEmail()
+  public email: string;
+
+  @IsString()
+  public userPw: string;
+}
+
 export class ChangePasswordDto {
   @IsString()
   public userPw: string;
