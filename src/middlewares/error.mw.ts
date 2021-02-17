@@ -5,6 +5,7 @@ import HttpException from '../lib/httpException';
 import { logger } from '../configs/winston';
 
 const errorMiddleware = (error: HttpException, req: Request, res: Response, next: NextFunction) => {
+  console.error(error)
   try {
     const status: number = error.status || 500;
     const message: string = error.message || 'Something went wrong';
@@ -22,7 +23,6 @@ const errorMiddleware = (error: HttpException, req: Request, res: Response, next
         }
       );
     }
-
     logger.error(`StatusCode : ${status}, Message : ${message}`);
     res.status(status).json({ message });
   } catch (error) {
