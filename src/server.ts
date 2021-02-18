@@ -10,4 +10,4 @@ const PORT: number = parseInt(process.env.PORT, 10) || 3000;
 
 app.listen(PORT);
 
-logger.info(`Server is listening on port ${PORT}`)
+logger.info(`Server is listening on port ${PORT}`);

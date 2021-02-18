@@ -9,6 +9,6 @@ authRouter.post('/login', authController.login);
 authRouter.post('/join', authController.join);
 authRouter.post('/findPass', authController.sendMailToFindPassword);
 authRouter.post('/snsLogin', authController.snsLogin);
-authRouter.patch('/findPass', authController.findPassword);
+authRouter.patch('/findPass', authController.changePassword);
 
 export default authRouter;

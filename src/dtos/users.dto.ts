@@ -1,4 +1,4 @@
-import { IsEmail, IsString } from 'class-validator';
+import { IsEmail, IsObject, IsString } from 'class-validator';
 
 export class CreateUserDto {
   @IsEmail()
@@ -41,12 +41,63 @@ export class LoginDto {
 }
 
 export class ChangePasswordDto {
-  @IsString()
-  public userPw: string;
+  @IsEmail()
+  public email: string;
 
   @IsString()
   public userPwNew: string;
 
   @IsString()
   public userPwNewRe: string;
+
+  @IsString()
+  public token: string;
+}
+
+export class MailAuthDto {
+  @IsEmail()
+  public email: string;
+
+  @IsString()
+  public token: string;
+}
+
+export class SnsLoginDto {
+  @IsObject()
+  public snsData: GoogleLoginDto | FacebookLoginDto;
+
+  @IsString()
+  public snsType: string;
+
+  @IsString()
+  public userLang: string;
+}
+
+export class GoogleLoginDto {
+  profileObj: GoogleProfileDto;
+}
+
+export class FacebookLoginDto {
+  @IsString()
+  id: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  name: string;
+}
+
+export class GoogleProfileDto {
+  @IsString()
+  googleId: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  imageUrl: string;
+
+  @IsString()
+  name: string;
 }

@@ -59,13 +59,39 @@ class AuthService {
     return updateUserData;
   }
 
-  public async deleteUser(userId: string) {
+  public async deleteUser(userId: string): Promise<User> {
     const deleteUser: User = await this.users.findByIdAndDelete(userId);
+
     if (!deleteUser) {
-      throw new HttpException(409, 'Not a user');
+      throw new HttpException(404, 'User not found');
     }
 
     return deleteUser;
+  }
+
+  public async confirmUser(email: string, token: string): Promise<User> {
+    const findUser: User = await this.users.findOne({ email, token });
+
+    if (!findUser) {
+      throw new HttpException(409, 'Not a user');
+    }
+
+    if (findUser.token === null && findUser.isConfirmed === true) {
+      throw new HttpException(409, 'Already confirmed');
+    }
+
+    const updateUser: User = await this.users.updateOne(
+      { email },
+      { isConfirmed: true, token: null }
+    );
+
+    return updateUser;
+  }
+
+  public async findBySnsId(snsId: string, snsType: string): Promise<User> {
+    const findUser: User = await this.users.findOne({ snsId, snsType });
+
+    return findUser;
   }
 }
 

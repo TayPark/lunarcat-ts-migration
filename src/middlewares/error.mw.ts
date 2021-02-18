@@ -7,7 +7,7 @@ import { logger } from '../configs/winston';
 const errorMiddleware = (error: HttpException, req: Request, res: Response, next: NextFunction) => {
   const status: number = error.status || 500;
   const message: string = error.message || 'Something went wrong';
-  
+
   try {
     // Only alert on 500 error
     if (process.env.NODE_ENV === 'production' && error.status === 500) {
