@@ -1,4 +1,4 @@
-export interface User {
+export class User {
   // MongoDB id
   _id: string;
 

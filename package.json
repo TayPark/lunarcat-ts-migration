@@ -10,8 +10,8 @@
     "format": "prettier --write \"src/**/*.ts\" \"__tests__/**/*.ts\"",
     "lint": "eslint --fix \"src/**/*.ts\" \"__tests__/**/*.test.ts\"",
     "lint:init": "eslint --init",
-    "test": "NODE_ENV=test && ./node_modules/.bin/jest tests --config=jest.config.js --runInBand",
-    "test:debug": "NODE_ENV=test &&./node_modules/.bin/jest tests --config=jest.config.js --runInBand --detectOpenHandles ",
+    "test": "NODE_ENV=test && jest --watch",
+    "test:debug": "NODE_ENV=test && jest --runInBand --detectOpenHandles ",
     "test:docker": "docker exec -it server yarn test"
   },
   "dependencies": {
@@ -36,7 +36,7 @@
     "joi": "^17.2.1",
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.5.9",
-    "mongoose": "^5.9.18",
+    "mongoose": "5.11.15",
     "morgan": "~1.9.1",
     "multer": "^1.4.2",
     "multer-s3": "^2.9.0",
@@ -55,6 +55,7 @@
     "@babel/core": "^7.10.4",
     "@babel/node": "^7.10.4",
     "@babel/preset-env": "^7.10.4",
+    "@babel/preset-typescript": "^7.12.17",
     "@jest/globals": "^26.4.2",
     "@shelf/jest-mongodb": "^1.2.3",
     "@types/compression": "^1.7.0",
@@ -85,6 +86,7 @@
     "prettier": "^2.2.1",
     "random-string": "^0.2.0",
     "supertest": "^4.0.2",
+    "ts-jest": "^26.5.1",
     "ts-node": "^9.1.1"
   }
 }

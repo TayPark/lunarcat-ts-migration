@@ -2,14 +2,14 @@ import axios from 'axios';
 import crypto from 'crypto';
 import util from 'util';
 import jwt from 'jsonwebtoken';
+import Joi from 'joi';
 import { NextFunction, Request, Response } from 'express';
 
 import {
-  ChangePasswordDto,
-  CreateUserDto,
-  GoogleLoginDto,
+  JoinDto,
   LoginDto,
-  MailAuthDto,
+  GoogleLoginDto,
+  ChangePasswordDto,
   SnsLoginDto,
 } from '../dtos/users.dto';
 import AuthService from '../services/auth.service';
@@ -19,8 +19,8 @@ import HttpException from '../lib/httpException';
 import { logger } from '../configs/winston';
 import IntResponse from '../lib/response';
 
-export class AuthController {
-  private authService: AuthService = new AuthService();
+class AuthController {
+  public authService: AuthService = new AuthService();
 
   private SECRET_KEY = process.env.SECRET_KEY;
   private EXEC_NUM = parseInt(process.env.EXEC_NUM, 10);
@@ -37,7 +37,7 @@ export class AuthController {
    * @route POST /auth/join
    */
   public join = async (req: Request, res: Response, next: NextFunction) => {
-    const userData: CreateUserDto = req.body;
+    const userData: JoinDto = req.body;
 
     const userPassRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/.test(
       userData.userPw
@@ -186,60 +186,64 @@ export class AuthController {
             name: inputData.snsData.name,
           };
 
-    let findUser: User = await this.authService.findById(snsLoginData.uid);
+    try {
+      let findUser: User = await this.authService.findById(snsLoginData.uid);
 
-    if (!findUser) {
-      const generateId: string = crypto
-        .createHash('sha256')
-        .update(snsLoginData.email)
-        .digest('hex')
-        .slice(0, 14);
+      if (!findUser) {
+        const generateId: string = crypto
+          .createHash('sha256')
+          .update(snsLoginData.email)
+          .digest('hex')
+          .slice(0, 14);
 
-      const salt: string = await (await this.randomBytes(64)).toString('base64');
+        const salt: string = await (await this.randomBytes(64)).toString('base64');
 
-      const cryptedPassword: string = await crypto
-        .pbkdf2Sync(snsLoginData.email, salt, this.EXEC_NUM, this.RESULT_LENGTH, 'sha512')
-        .toString('base64');
+        const cryptedPassword: string = await crypto
+          .pbkdf2Sync(snsLoginData.email, salt, this.EXEC_NUM, this.RESULT_LENGTH, 'sha512')
+          .toString('base64');
 
-      findUser = await this.authService.createUser({
-        email: snsLoginData.email,
-        password: cryptedPassword,
-        salt,
-        nickname: snsLoginData.name,
-        token: null, // SNS으로 이미 인증된 계정이므로 mail auth를 위한 token을 null로 처리
-        screenId: generateId,
-        displayLanguage: parseInt(inputData.userLang, 10),
-        profile: snsLoginData.profile,
-        snsId: snsLoginData.uid,
-        snsType: inputData.snsType,
-        isConfirmed: true,
-      });
-    }
-
-    if (findUser.deactivatedAt !== null) {
-      next(new HttpException(404, 'Deactivated account'));
-    }
-
-    const authToken = jwt.sign(
-      {
-        nick: findUser.nickname,
-        uid: findUser._id,
-        isConfirmed: findUser.isConfirmed,
-      },
-      this.SECRET_KEY,
-      {
-        expiresIn: this.JWT_EXPIRES_IN,
+        findUser = await this.authService.createUser({
+          email: snsLoginData.email,
+          password: cryptedPassword,
+          salt,
+          nickname: snsLoginData.name,
+          token: null, // SNS으로 이미 인증된 계정이므로 mail auth를 위한 token을 null로 처리
+          screenId: generateId,
+          displayLanguage: parseInt(inputData.userLang, 10),
+          profile: snsLoginData.profile,
+          snsId: snsLoginData.uid,
+          snsType: inputData.snsType,
+          isConfirmed: true,
+        });
       }
-    );
 
-    const responseData = {
-      token: authToken,
-      nick: findUser.nickname,
-      screenId: findUser.screenId,
-      displayLanguage: findUser.screenId,
-    };
+      if (findUser.deactivatedAt !== null) {
+        next(new HttpException(404, 'Deactivated account'));
+      }
 
-    IntResponse(res, 200, responseData);
+      const authToken = jwt.sign(
+        {
+          nick: findUser.nickname,
+          uid: findUser._id,
+          isConfirmed: findUser.isConfirmed,
+        },
+        this.SECRET_KEY,
+        {
+          expiresIn: this.JWT_EXPIRES_IN,
+        }
+      );
+
+      const responseData = {
+        token: authToken,
+        nick: findUser.nickname,
+        screenId: findUser.screenId,
+        displayLanguage: findUser.screenId,
+      };
+
+      IntResponse(res, 200, responseData);
+    } catch (e) {
+      next(e);
+    }
   };
 
   /**
@@ -291,29 +295,36 @@ export class AuthController {
       inputData.userPwNew
     );
 
-    if (userPassRegex) {
-      const targetUser: User = await this.authService.findByEmail(inputData.email);
+    try {
+      if (userPassRegex) {
+        const targetUser: User = await this.authService.findByEmail(inputData.email);
 
-      if (targetUser) {
-        const newSalt: string = await (await this.randomBytes(64)).toString('base64');
-        const newPassword: string = await (
-          await crypto.pbkdf2Sync(
-            inputData.userPwNew,
-            newSalt,
-            this.EXEC_NUM,
-            this.RESULT_LENGTH,
-            'sha512'
-          )
-        ).toString('base64');
+        if (targetUser) {
+          const newSalt: string = await (await this.randomBytes(64)).toString('base64');
+          const newPassword: string = await (
+            await crypto.pbkdf2Sync(
+              inputData.userPwNew,
+              newSalt,
+              this.EXEC_NUM,
+              this.RESULT_LENGTH,
+              'sha512'
+            )
+          ).toString('base64');
 
-        await this.authService.updateUser(targetUser._id, { salt: newSalt, password: newPassword });
+          await this.authService.updateUser(targetUser._id, {
+            salt: newSalt,
+            password: newPassword,
+          });
 
-        IntResponse(res, 200, {}, 'Password changed');
+          IntResponse(res, 200, {}, 'Password changed');
+        } else {
+          next(new HttpException(400, `User ${inputData.email} not found`));
+        }
       } else {
-        next(new HttpException(400, `User ${inputData.email} not found`));
+        next(new HttpException(400, 'Check password rule'));
       }
-    } else {
-      next(new HttpException(400, 'Check password rule'));
+    } catch (e) {
+      next(e);
     }
   };
 
@@ -352,3 +363,5 @@ export class AuthController {
     }
   };
 }
+
+export default AuthController;

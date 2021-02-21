@@ -28,7 +28,7 @@ export const connectDatabase = () => {
     .then(() => {
       logger.info('Database connected!');
     })
-    .catch((error: Error) => {
+    .catch((error) => {
       logger.error(`Unable to connect to database: ${error}`);
     });
 };

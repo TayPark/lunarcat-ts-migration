@@ -1,6 +1,6 @@
 import { IsEmail, IsObject, IsString } from 'class-validator';
 
-export class CreateUserDto {
+export class JoinDto {
   @IsEmail()
   public email: string;
 
@@ -49,14 +49,6 @@ export class ChangePasswordDto {
 
   @IsString()
   public userPwNewRe: string;
-
-  @IsString()
-  public token: string;
-}
-
-export class MailAuthDto {
-  @IsEmail()
-  public email: string;
 
   @IsString()
   public token: string;

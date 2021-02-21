@@ -1,22 +1,25 @@
-import { Connection } from 'mongoose';
-import child_process from 'child_process';
-import Database from '../../src/lib/database';
+const dotenv = require('dotenv');
+const dotenvExpand = require('dotenv-expand');
+
+const mongoose = require('mongoose');
+
+const dbConnOpts = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useCreateIndex: true,
+  useFindAndModify: true,
+};
 
 module.exports = async () => {
-  // console.log(`mongodb: ${Connection.readyState}`) // normally got 'undefined' while mongodb is running
-  /* MongoDB가 servicing이 아닐 때 시작시켜주는 코드입니다. 다만 db health check가 적절하지 않아 매번 동작하므로 리팩토링이 필요합니다. */
-  // if (Connection.readyState !== 1) {
-  //   console.log(`[FATAL] Database is not servicing or disconnected`)
-  //   child_process.exec('sudo service mongodb start', (err, stdout, stderr) => {
-  //     if (err) {
-  //       console.error(`There's error with starting database ${err}`)
-  //       console.error(stderr)
-  //       process.exit(1)
-  //     }
-  //     console.log(stdout)
-  //   })
-  // }
+  dotenvExpand(dotenv.config());
+  console.warn(process.env.MONGO_TEST_URI)
+  const conn = await mongoose.createConnection(process.env.MONGO_TEST_URI, dbConnOpts);
 
-  await Database.connect();
-  await Database.drop();
+  try {
+    await conn.dropDatabase();
+    console.log('Database dropped successfully');
+  } catch (e) {
+    console.error(`Fail to drop database: ${e} `)
+    process.exit(1);
+  }
 };

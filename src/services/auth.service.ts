@@ -25,10 +25,10 @@ class AuthService {
     return findUser;
   }
 
-  public async findByUserDto(userData: Partial<User>): Promise<User> {
-    const findUser: User = await this.users.findOne({ ...userData });
-    return findUser;
-  }
+  // public async findByUserDto(userData: Partial<User>): Promise<User> {
+  //   const findUser: User = await this.users.findOne({ ...userData });
+  //   return findUser;
+  // }
 
   public async createUser(userData: Partial<User>): Promise<User> {
     if (!userData) {

@@ -1,128 +1,167 @@
 import mongoose from 'mongoose';
 import request from 'supertest';
-import randomString from 'random-string';
 
 import app from '../../../src/app';
-import { CreateUserDto } from '../../../src/dtos/users.dto';
 import HttpException from '../../../src/lib/httpException';
-import { AuthService } from '../../../src/services/auth.service';
+import { connectDatabase } from '../../../src/lib/database';
 
-afterAll(async () => {
-  await new Promise<void>(resolve => setTimeout(() => resolve(), 500));
+beforeAll(async () => {
+  await connectDatabase();
 });
 
-describe('Testing AuthController', () => {
-  describe('POST /signup', () => {
-    it('response should have the Create userData', () => {
-      const userData: CreateUserDto = {
-        email: 'test@email.com',
-        password: 'q1w2e3r4!',
-      };
-
-      const authRoute = new AuthRoute();
-
-      authRoute.authController.authService.users.findOne = jest
-        .fn()
-        .mockReturnValue(Promise.resolve(undefined));
-
-      authRoute.authController.authService.users.create = jest
-        .fn()
-        .mockReturnValue({ _id: 0, ...userData });
-
-      (mongoose as any).connect = jest.fn();
-      const app = new App([authRoute]);
-
-      return request(app.getServer()).post('/signup').send(userData);
-    });
-  });
-
-  describe('POST /login', () => {
-    it('response should have the Set-Cookie header with the Authorization token', async () => {
-      const userData: CreateUserDto = {
-        email: 'test@email.com',
-        password: 'q1w2e3r4!',
-      };
-      process.env.JWT_SECRET = 'jwt_secret';
-
-      const authRoute = new AuthRoute();
-
-      authRoute.authController.authService.users.findOne = jest.fn().mockReturnValue(
-        Promise.resolve({
-          _id: 0,
-          email: 'test@email.com',
-          password: await bcrypt.hash(userData.password, 10),
-        })
-      );
-
-      (mongoose as any).connect = jest.fn();
-      const app = new App([authRoute]);
-      return request(app.getServer())
-        .post('/login')
-        .send(userData)
-        .expect('Set-Cookie', /^Authorization=.+/);
-    });
-  });
-
-  describe('POST /logout', () => {
-    it('logout Set-Cookie Authorization=; Max-age=0', () => {
-      const authRoute = new AuthRoute();
-
-      const app = new App([authRoute]);
-      return request(app.getServer())
-        .post('/logout')
-        .expect('Set-Cookie', /^Authorization=\;/);
-    });
-  });
+afterAll(() => {
+  mongoose.connection.close();
 });
 
-describe('Testing AuthService', () => {
-  describe('when creating a cookie', () => {
-    it('should return a string', () => {
-      const tokenData: TokenData = {
-        token: '',
-        expiresIn: 1,
+describe('/auth', () => {
+  describe('회원가입', () => {
+    test('가입한 회원의 데이터를 반환', async () => {
+      const inputData: any = {
+        email: 'test@email.com',
+        userPw: 'q1w2e3r4!',
+        userPwRe: 'q1w2e3r4!',
+        userNick: 'tester',
+        userLang: 1,
+      };
+      
+      const server = app;
+
+      await request(server).post('/auth/join').send(inputData).expect(201);
+    });
+
+    test('중복된 이메일 | 409', async () => {
+      const inputData: any = {
+        email: 'test@email.com',
+        userPw: 'q1w2e3r4!',
+        userPwRe: 'q1w2e3r4!',
+        userLang: 1,
+        userNick: 'tester',
       };
 
-      const authService = new AuthService();
+      const server = app;
 
-      expect(typeof authService.createCookie(tokenData)).toEqual('string');
+      await request(server).post('/auth/join').send(inputData).expect(409);
+    });
+
+    test('비밀번호 미일치 | 400', async () => {
+      const inputData: any = {
+        email: 'test1234@email.com',
+        userPw: 'q1w2e3r4!!!!',
+        userPwRe: 'q1w2e3r4!',
+        userLang: 1,
+        userNick: 'tester',
+      };
+
+      const server = app;
+
+      await request(server).post('/auth/join').send(inputData).expect(400);
+    });
+
+    test('데이터 누락', () => {
+      const inputData: any = {
+        email: 'test@email.com',
+        userPw: 'q1w2e3r4!',
+        userPwRe: 'q1w2e3r4!',
+        // userLang: 1,
+        userNick: 'tester',
+      }
+
+      const server = app;
+
+      return request(server).post('/auth/join').send(inputData);
     });
   });
 
-  describe('when registering a user', () => {
-    describe('if the email is already token', () => {
-      it('should throw an error', async () => {
-        const userData: CreateUserDto = {
-          email: 'test@email.com',
-          password: 'q1w2e3r4!',
-        };
+  describe('로그인', () => {
 
-        const authService = new AuthService();
+  })
+//   describe('POST /login', () => {
+//     test('response should have the Set-Cookie header with the Authorization token', async () => {
+//       const userData: JoinDto = {
+//         email: 'test@email.com',
+//         password: 'q1w2e3r4!',
+//       };
+//       process.env.JWT_SECRET = 'jwt_secret';
 
-        authService.users.findOne = jest.fn().mockReturnValue(Promise.resolve(userData));
+//       const authRoute = new AuthRoute();
 
-        await expect(authService.signup(userData)).rejects.toMatchObject(
-          new HttpException(400, `User with email ${userData.email} already exists`)
-        );
-      });
-    });
+//       authRoute.authController.authService.users.findOne = jest.fn().mockReturnValue(
+//         Promise.resolve({
+//           _id: 0,
+//           email: 'test@email.com',
+//           password: await bcrypt.hash(userData.password, 10),
+//         })
+//       );
 
-    describe('if the email is not token', () => {
-      it('should not throw an error', async () => {
-        const userData: CreateUserDto = {
-          email: 'test@email.com',
-          password: 'q1w2e3r4!',
-        };
-        process.env.JWT_SECRET = 'jwt_secret';
+//       (mongoose as any).connect = jest.fn();
+//       const app = new server([authRoute]);
+//       return request(app.getServer())
+//         .post('/login')
+//         .send(userData)
+//         .expect('Set-Cookie', /^Authorization=.+/);
+//     });
+//   });
 
-        const authService = new AuthService();
+//   describe('POST /logout', () => {
+//     test('logout Set-Cookie Authorization=; Max-age=0', () => {
+//       const authRoute = new AuthRoute();
 
-        authService.users.findOne = jest.fn().mockReturnValue(Promise.resolve(undefined));
+//       const app = new server([authRoute]);
+//       return request(app.getServer())
+//         .post('/logout')
+//         .expect('Set-Cookie', /^Authorization=\;/);
+//     });
+//   });
+// });
 
-        authService.users.create = jest.fn().mockReturnValue({ _id: 0, ...userData });
+// describe('Testing AuthService', () => {
+//   describe('when creating a cookie', () => {
+//     test('should return a string', () => {
+//       const tokenData: TokenData = {
+//         token: '',
+//         expiresIn: 1,
+//       };
 
-        await expect(authService.signup(userData)).resolves.toBeDefined();
-      });
-    });
-  });
+//       const authService = new AuthService();
+
+//       expect(typeof authService.createCookie(tokenData)).toEqual('string');
+//     });
+//   });
+
+//   describe('when registering a user', () => {
+//     describe('if the email is already token', () => {
+//       test('should throw an error', async () => {
+//         const userData: JoinDto = {
+//           email: 'test@email.com',
+//           password: 'q1w2e3r4!',
+//         };
+
+//         const authService = new AuthService();
+
+//         authService.users.findOne = jest.fn().mockReturnValue(Promise.resolve(userData));
+
+//         await expect(authService.signup(userData)).rejects.toMatchObject(
+//           new HttpException(400, `JoinDto with email ${userData.email} already exists`)
+//         );
+//       });
+//     });
+
+//     describe('if the email is not token', () => {
+//       test('should not throw an error', async () => {
+//         const userData: JoinDto = {
+//           email: 'test@email.com',
+//           password: 'q1w2e3r4!',
+//         };
+//         process.env.JWT_SECRET = 'jwt_secret';
+
+//         const authService = new AuthService();
+
+//         authService.users.findOne = jest.fn().mockReturnValue(Promise.resolve(undefined));
+
+//         authService.users.create = jest.fn().mockReturnValue({ _id: 0, ...userData });
+
+//         await expect(authService.signup(userData)).resolves.toBeDefined();
+//       });
+//     });
+//   });
 });
