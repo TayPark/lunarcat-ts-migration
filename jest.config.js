@@ -13,15 +13,15 @@ module.exports = {
   // Ignoring directories
   modulePathIgnorePatterns: [
     /* integration testing */
-    // "./__tests__/integration/v1.1/*",
+    "./__tests__/integration/v1.1/*",
 
     /* service testing */
     // "./__tests__/services/v1.1/*.test.ts",
   ],
 
-  // Trigger before all test cases start
+  // Triggered before all test cases start
   globalSetup: "./__tests__/configs/globalSetup.js",
 
-  // Triggered when every test case starts
+  // Triggered when all test cases end
   // globalTeardown: "./__tests__/configs/globalTeardown.js",
 }; 

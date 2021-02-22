@@ -19,6 +19,7 @@ import HttpException from '../lib/httpException';
 import { logger } from '../configs/winston';
 import IntResponse from '../lib/response';
 import MongoAuthRepository from '../repositories/mongo.auth.repo';
+import { BadRequestException } from '../lib/exceptions';
 
 class AuthController {
   public authService: AuthService = new AuthService(new MongoAuthRepository());
@@ -54,7 +55,7 @@ class AuthController {
 
       await joinSchema.validateAsync(userData);
     } catch (e) {
-      return next(new HttpException(400, `Input validation failed: ${e}`));
+      return next(new BadRequestException(`Input validation failed: ${e}`));
     }
 
     const userPassRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/.test(
@@ -137,7 +138,7 @@ class AuthController {
       const targetUser: User = await this.authService.findByEmail(userData.email);
 
       if (!targetUser) {
-        return new HttpException(400, 'Check your id and password')
+        return new HttpException(400, 'Check your id and password');
       }
 
       const cryptedPassword: Buffer = crypto.pbkdf2Sync(

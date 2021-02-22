@@ -1,8 +1,9 @@
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 
 import app from '../../../src/app';
-import { connectDatabase, dropDatabase } from '../../../src/lib/database';
+import { connectDatabase } from '../../../src/lib/database';
 import randomString from 'random-string';
 import { JoinDto } from '../../../src/dtos/users.dto';
 import AuthService from '../../../src/services/auth.service';
@@ -14,7 +15,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await dropDatabase();
+  mongoose.connection.close();
 });
 
 describe('/auth', () => {
@@ -126,21 +127,22 @@ describe('/auth', () => {
           .expect(400);
       });
 
-      // test('비밀번호가 일치하지 않음 | 400', async () => {
-      //   const inputData: JoinDto = {
-      //     email: randomString() + '@email.com',
-      //     userPw: 'q1w2e3r4!',
-      //     userPwRe: 'q1w2e3r4!',
-      //     userLang: 1,
-      //     userNick: 'tester',
-      //   };
+      test('비밀번호가 일치하지 않음 | 400', async () => {
+        const inputData: JoinDto = {
+          email: randomString() + '@email.com',
+          userPw: 'q1w2e3r4!',
+          userPwRe: 'q1w2e3r4!',
+          userLang: 0,
+          userNick: 'tester',
+        };
 
-      //   await request(app).post('/auth/join').send(inputData).expect(201);
-      //   await request(app)
-      //     .post('/auth/login')
-      //     .send({ email: inputData.email, userPw: randomString() })
-      //     .expect(400);
-      // });
+        await request(app).post('/auth/join').send(inputData).expect(201);
+
+        await request(app)
+          .post('/auth/login')
+          .send({ email: inputData.email, userPw: randomString() })
+          .expect(400);
+      });
 
       describe('SNS 로그인', () => {
         test('성공 | 200', async () => {});

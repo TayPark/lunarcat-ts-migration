@@ -1,4 +1,5 @@
 import { User } from '../interfaces/users.interface';
+import { NotFoundException, BadRequestException } from '../lib/exceptions';
 import HttpException from '../lib/httpException';
 import { AuthRepository } from '../repositories/auth.repo';
 class AuthService {
@@ -27,7 +28,7 @@ class AuthService {
     const findUser: User = await this.authRepository.login(email, password);
 
     if (!findUser) {
-      throw new HttpException(404, 'User not found')
+      throw new NotFoundException('User not found');
     }
 
     return findUser;
@@ -35,13 +36,13 @@ class AuthService {
 
   public async createUser(userData: Partial<User>): Promise<User> {
     if (!userData) {
-      throw new HttpException(400, 'Input data is not satisfied');
+      throw new BadRequestException('Input data is not satisfied');
     }
 
     const findUser: User = await this.authRepository.findByEmail(userData.email);
 
     if (findUser) {
-      throw new HttpException(409, `Duplicated email ${userData.email}`);
+      throw new BadRequestException(`Duplicated email ${userData.email}`);
     }
 
     const createUserData: User = await this.authRepository.createUser(userData);
@@ -50,13 +51,13 @@ class AuthService {
 
   public async updateUser(userId: string, userData: Partial<User>): Promise<User> {
     if (!userId || !userData) {
-      throw new HttpException(400, 'User id and data required');
+      throw new BadRequestException('User id and data required');
     }
 
     const updateUserData = await this.authRepository.updateUser(userId, userData);
 
     if (!updateUserData) {
-      throw new HttpException(409, 'Not a user');
+      throw new BadRequestException('Not a user');
     }
 
     return updateUserData;
@@ -66,7 +67,7 @@ class AuthService {
     const deleteUser: User = await this.authRepository.deleteUser(userId);
 
     if (!deleteUser) {
-      throw new HttpException(404, 'User not found');
+      throw new NotFoundException('User not found');
     }
 
     return deleteUser;
@@ -76,11 +77,11 @@ class AuthService {
     const findUser: User = await this.authRepository.findByUserDto({ email, token });
 
     if (!findUser) {
-      throw new HttpException(409, 'Not a user');
+      throw new BadRequestException('Not a user');
     }
 
     if (findUser.token === null && findUser.isConfirmed === true) {
-      throw new HttpException(409, 'Already confirmed');
+      throw new BadRequestException('Already confirmed');
     }
 
     return findUser;
