@@ -1,6 +1,5 @@
 import { User } from '../interfaces/users.interface';
 import HttpException from '../lib/httpException';
-import userModel from '../models/users.model';
 import { AuthRepository } from '../repositories/auth.repo';
 class AuthService {
   private readonly authRepository: AuthRepository;

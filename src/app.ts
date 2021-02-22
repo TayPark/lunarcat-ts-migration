@@ -52,7 +52,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 /**
  * 에러 핸들러
  */
-app.use(errorMiddleware);
+if (process.env.NODE_ENV !== 'test') {
+  app.use(errorMiddleware);
+}
 
 /**
  * 프로세스 핸들러

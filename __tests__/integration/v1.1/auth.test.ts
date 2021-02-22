@@ -5,6 +5,9 @@ import app from '../../../src/app';
 import { connectDatabase, dropDatabase } from '../../../src/lib/database';
 import randomString from 'random-string';
 import { JoinDto } from '../../../src/dtos/users.dto';
+import AuthService from '../../../src/services/auth.service';
+import MongoAuthRepository from '../../../src/repositories/mongo.auth.repo';
+import { User } from '../../../src/interfaces/users.interface';
 
 beforeAll(async () => {
   await connectDatabase();
@@ -15,6 +18,8 @@ afterAll(async () => {
 });
 
 describe('/auth', () => {
+  const authService: AuthService = new AuthService(new MongoAuthRepository());
+
   describe('회원가입', () => {
     test('회원가입 성공 | 201', async () => {
       const inputData: JoinDto = {
@@ -87,31 +92,59 @@ describe('/auth', () => {
     });
   });
 
-  // describe('로그인', () => {
-  //   describe('일반 로그인', () => {
-  //     test('성공 | 200', async () => {
+  describe('로그인', () => {
+    describe('일반 로그인', () => {
+      test('성공 | 200', async () => {
+        const inputData: JoinDto = {
+          email: randomString() + '@email.com',
+          userPw: 'q1w2e3r4!',
+          userPwRe: 'q1w2e3r4!',
+          userLang: 1,
+          userNick: 'tester',
+        };
 
-  //     })
+        const server = app;
 
-  //     test('이메일이 존재하지 않음 | 400', async () => {
+        await request(server).post('/auth/join').send(inputData).expect(200);
+        const createUser: User = await authService.findByEmail(inputData.email);
+        await request(server).post('/auth/mailAuth').send({ email: inputData.email, token: createUser.token });
+        await request(server).post('/auth/login').send(inputData).expect(200);
+      })
 
-  //     })
+      test('이메일이 인증되지 않음', async () => {
+        const inputData: JoinDto = {
+          email: randomString() + '@email.com',
+          userPw: 'q1w2e3r4!',
+          userPwRe: 'q1w2e3r4!',
+          userLang: 1,
+          userNick: 'tester',
+        };
 
-  //     test('비밀번호가 일치하지 않음 | 400', async () => {
+        const server = app;
 
-  //     })
-  //   })
+        await request(server).post('/auth/join').send(inputData).expect(200);
+        await request(server).post('/auth/login').send(inputData).expect(401);
+      })
 
-  //   describe('SNS 로그인', () => {
-  //     test('성공 | 200', async () => {
+      test('이메일이 존재하지 않음 | 400', async () => {
 
-  //     })
+      })
 
-  //     test('데이터 누락 | 400', async () => {
+      test('비밀번호가 일치하지 않음 | 400', async () => {
 
-  //     })
-  //   })
-  // })
+      })
+    })
+
+    describe('SNS 로그인', () => {
+      test('성공 | 200', async () => {
+
+      })
+
+      test('데이터 누락 | 400', async () => {
+
+      })
+    })
+  })
 
   //   describe('POST /login', () => {
   //     test('response should have the Set-Cookie header with the Authorization token', async () => {

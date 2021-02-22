@@ -30,7 +30,7 @@ export const connectDatabase = async () => {
   mongoose
     .connect(dbEnvironment, dbConnOpts)
     .then(() => {
-      logger.info('Database connected!');
+      logger.info(`***MongoDB for ${process.env.NODE_ENV} is connected***`);
     })
     .catch(error => {
       logger.error(`Unable to connect to database: ${error}`);

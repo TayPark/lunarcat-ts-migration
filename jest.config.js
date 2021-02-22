@@ -20,8 +20,7 @@ module.exports = {
   ],
 
   // Trigger before all test cases start
-  // globalSetup: "./__tests__/configs/globalSetup.js",
-  // setupFilesAfterEnv: ["./__tests__/configs/setTimeout.js"],
+  globalSetup: "./__tests__/configs/globalSetup.js",
 
   // Triggered when every test case starts
   // globalTeardown: "./__tests__/configs/globalTeardown.js",
