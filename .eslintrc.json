@@ -12,6 +12,13 @@
         "ecmaVersion": 12,
         "sourceType": "module"
     },
+    "settings": {
+        "import/resolver": {
+          "node": {
+            "extensions": [".js", ".ts"]
+          }
+        }
+    },
     "rules": {
         "no-underscore-dangle": "off",  // _id warning
         "func-names": "off", // MongoDB static 함수 warning

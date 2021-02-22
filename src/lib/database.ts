@@ -1,34 +1,48 @@
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import dotenvExpand from 'dotenv-expand';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+
 import { logger } from '../configs/winston';
 
 dotenvExpand(dotenv.config());
 
 mongoose.Promise = global.Promise;
 
-const options = {
+export const memoryDb = new MongoMemoryServer();
+
+export const dbConnOpts = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true,
   useFindAndModify: true,
 };
 
-const dbEnvironment =
-  process.env.NODE_ENV === 'test' ? process.env.MONGO_TEST_URI : process.env.MONGO_URI_ALONE;
+export const connectDatabase = async () => {
+  const dbEnvironment =
+  process.env.NODE_ENV === 'test' ? await memoryDb.getUri() : process.env.MONGO_URI_ALONE;  
 
-export const connectDatabase = () => {
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV === 'development') {
     // enable logging collection methods + arguments to the console/file
     mongoose.set('debug', true);
   }
 
   mongoose
-    .connect(dbEnvironment, options)
+    .connect(dbEnvironment, dbConnOpts)
     .then(() => {
       logger.info('Database connected!');
     })
-    .catch((error) => {
+    .catch(error => {
       logger.error(`Unable to connect to database: ${error}`);
     });
 };
+
+export const dropDatabase = async () => {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error(`Dropping database only allowed on test environment.`)
+  }
+
+  await mongoose.connection.dropDatabase();
+  await mongoose.connection.close();
+  memoryDb.stop();
+}

@@ -18,9 +18,10 @@ import { User } from '../interfaces/users.interface';
 import HttpException from '../lib/httpException';
 import { logger } from '../configs/winston';
 import IntResponse from '../lib/response';
+import MongoAuthRepository from '../repositories/mongo.auth.repo';
 
 class AuthController {
-  public authService: AuthService = new AuthService();
+  public authService: AuthService = new AuthService(new MongoAuthRepository());
 
   private SECRET_KEY = process.env.SECRET_KEY;
   private EXEC_NUM = parseInt(process.env.EXEC_NUM, 10);
@@ -38,6 +39,23 @@ class AuthController {
    */
   public join = async (req: Request, res: Response, next: NextFunction) => {
     const userData: JoinDto = req.body;
+
+    // input validation
+    try {
+      const joinSchema = Joi.object({
+        email: Joi.string()
+          .regex(/^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$/i)
+          .required(),
+        userPw: Joi.string().required(),
+        userPwRe: Joi.string().required(),
+        userNick: Joi.string().trim().required(),
+        userLang: Joi.number().required(),
+      });
+
+      await joinSchema.validateAsync(userData);
+    } catch (e) {
+      return next(new HttpException(400, `Input validation failed: ${e}`));
+    }
 
     const userPassRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/.test(
       userData.userPw
@@ -68,7 +86,7 @@ class AuthController {
               password: cryptedPassword.toString('base64'),
               salt,
               token: authToken,
-              displayLanguage: parseInt(userData.userLang, 10),
+              displayLanguage: userData.userLang,
             });
 
             if (createUser) {

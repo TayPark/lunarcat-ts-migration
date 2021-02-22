@@ -10,9 +10,10 @@
     "format": "prettier --write \"src/**/*.ts\" \"__tests__/**/*.ts\"",
     "lint": "eslint --fix \"src/**/*.ts\" \"__tests__/**/*.test.ts\"",
     "lint:init": "eslint --init",
-    "test": "NODE_ENV=test && jest --watch",
-    "test:debug": "NODE_ENV=test && jest --runInBand --detectOpenHandles ",
-    "test:docker": "docker exec -it server yarn test"
+    "test": "NODE_ENV=test && jest --forceExit --runInBand --detectOpenHandles",
+    "test:cov": "cross-env NODE_ENV=test && jest --coverage",
+    "test:docker": "docker exec -it server yarn test",
+    "test:docker-cov": "docker exec -it server yarn test:cov --forceExit"
   },
   "dependencies": {
     "@slack/webhook": "^5.0.3",
@@ -83,6 +84,7 @@
     "eslint-plugin-react": "^7.20.4",
     "form-data": "^3.0.0",
     "jest": "^26.4.2",
+    "mongodb-memory-server": "^6.9.3",
     "prettier": "^2.2.1",
     "random-string": "^0.2.0",
     "supertest": "^4.0.2",

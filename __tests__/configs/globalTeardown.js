@@ -1,7 +1,6 @@
-import Database from '../../src/lib/database';
+const { dropDatabase } = require('../../src/lib/database')
 
 module.exports = async () => {
-  await Database.disconnect();
-  console.log(`[INFO] Test successfully ended!`);
+  await dropDatabase();
   process.exit(0);
 };

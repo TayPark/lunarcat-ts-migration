@@ -10,7 +10,7 @@ export interface AuthRepository {
   // default CRUD
   createUser(createUserDto: Partial<User>): Promise<User>;
   findAll(): Promise<User[]>;
-  updateUser(updateUserDto: Partial<User>): Promise<User>;
+  updateUser(userId: string, updateUserDto: Partial<User>): Promise<User>;
   deleteUser(deleteUserId: string): Promise<User>;
 
   // etc

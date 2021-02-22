@@ -1,42 +1,28 @@
 module.exports = {
   // Env settings
   testMatch: [
-    "**/?(*.)+(spec|test).+(ts|js)"
+    "**/?(*.)+(spec|test).ts"
   ],
   transform: {
     "^.+\\.(ts|tsx)$": "ts-jest"
   },
+  testTimeout: 30000,
   testEnvironment: "node",
   preset: "ts-jest",
   verbose: true,
   // Ignoring directories
   modulePathIgnorePatterns: [
-    /* default ignorance */
-    "./__tests__/configs/*",
-    "./__tests__/ignore/*",
+    /* integration testing */
+    // "./__tests__/integration/v1.1/*",
 
-    /* server healthChecking (for proper runtime checking) */
-    "./__tests__/integration/v1/healthCheck.test.js",
-
-    /* middleswares */
-    "./__tests__/middlewares/v1/token.test.js",
-
-    /* integration */
-    "./__tests__/integration/v1/user.test.js",
-    "./__tests__/integration/v1/board.test.js",
-    "./__tests__/integration/v1/feedback.test.js",
-    "./__tests__/integration/v1/reply.test.js",
-
-    /* interactions */
-    "./__tests__/interactions/v1/follow.test.js",
-    "./__tests__/interactions/v1/like.test.js",
-    "./__tests__/interactions/v1/bookmark.test.js",
+    /* service testing */
+    // "./__tests__/services/v1.1/*.test.ts",
   ],
 
   // Trigger before all test cases start
-  globalSetup: "./__tests__/configs/globalSetup.js",
+  // globalSetup: "./__tests__/configs/globalSetup.js",
   // setupFilesAfterEnv: ["./__tests__/configs/setTimeout.js"],
 
-  // Trigger after all test cases start
+  // Triggered when every test case starts
   // globalTeardown: "./__tests__/configs/globalTeardown.js",
 }; 

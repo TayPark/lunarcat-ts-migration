@@ -1,4 +1,4 @@
-import { IsEmail, IsObject, IsString } from 'class-validator';
+import { IsEmail, IsNumber, IsObject, IsString } from 'class-validator';
 
 export class JoinDto {
   @IsEmail()
@@ -10,8 +10,8 @@ export class JoinDto {
   @IsString()
   public userPwRe: string;
 
-  @IsString()
-  public userLang: string;
+  @IsNumber()
+  public userLang: number;
 
   @IsString()
   public userNick: string;
