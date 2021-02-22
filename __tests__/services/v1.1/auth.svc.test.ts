@@ -23,7 +23,7 @@ describe('UserService', () => {
 
   it('should be defined: authService', () => {
     expect(authService).toBeDefined();
-  })
+  });
 
   // describe('AuthService.createUser()', () => {
   //   test('성공', async () => {
@@ -32,11 +32,11 @@ describe('UserService', () => {
   //       password: randomString(),
   //       nickname: 'tester',
   //     };
-  
+
   //     const allUser: User[] = await authService.findAll();
   //     authService.createUser(inputData);
   //     const afterCreation: User[] = await authService.findAll();
-  
+
   //     expect(afterCreation.length).toBeGreaterThan(allUser.length);
   //   });
 
@@ -48,7 +48,7 @@ describe('UserService', () => {
   //       userLang: 1,
   //       userNick: 'tester',
   //     };
-  
+
   //     try {
   //       authService.createUser(inputData);
   //     } catch (e) {
@@ -56,7 +56,7 @@ describe('UserService', () => {
   //     }
   //   });
   // })
-  
+
   // describe('AuthService.findById', () => {
   //   test('성공', async () => {
   //     const inputData: any = {
@@ -64,7 +64,7 @@ describe('UserService', () => {
   //       password: 'q1w2e3r4!',
   //       nickname: 'tester',
   //     };
-  
+
   //     const createUser: User = await authService.createUser(inputData);
   //     const findUser: User = await authService.findById(createUser._id);
   //     expect(createUser._id.toString()).toBe(findUser._id.toString());
@@ -79,27 +79,15 @@ describe('UserService', () => {
   //   })
   // })
 
-  describe('AuthService.findByEmail()', () => {
+  describe('AuthService.findByEmail()', () => {});
 
-  })
+  describe('AuthService.login()', () => {});
 
-  describe('AuthService.login()', () => {
-    
-  })
+  describe('AuthService.updateUser()', () => {});
 
-  describe('AuthService.updateUser()', () => {
-    
-  })
+  describe('AuthService.deleteUser()', () => {});
 
-  describe('AuthService.deleteUser()', () => {
-    
-  })
+  describe('AuthService.confirmUser()', () => {});
 
-  describe('AuthService.confirmUser()', () => {
-    
-  })
-
-  describe('AuthService.findBySnsId()', () => {
-    
-  })
+  describe('AuthService.findBySnsId()', () => {});
 });

@@ -136,8 +136,8 @@ class AuthController {
     try {
       const targetUser: User = await this.authService.findByEmail(userData.email);
 
-      if (targetUser.deactivatedAt !== null) {
-        next(new HttpException(409, 'Deactivated account'));
+      if (!targetUser) {
+        return new HttpException(400, 'Check your id and password')
       }
 
       const cryptedPassword: Buffer = crypto.pbkdf2Sync(
@@ -149,7 +149,11 @@ class AuthController {
       );
 
       if (targetUser.password === cryptedPassword.toString('base64')) {
-        const authToken = jwt.sign(
+        if (targetUser.deactivatedAt !== null) {
+          return next(new HttpException(409, 'Deactivated account'));
+        }
+
+        const authToken: string = jwt.sign(
           {
             nick: targetUser.nickname,
             uid: targetUser._id,

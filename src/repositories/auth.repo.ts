@@ -1,12 +1,12 @@
-import { User } from "../interfaces/users.interface";
+import { User } from '../interfaces/users.interface';
 
 export interface AuthRepository {
-  // find by 
+  // find by
   findById(userId: string): Promise<User>;
   findByEmail(email: string): Promise<User>;
   findByUserDto(userData: Partial<User>): Promise<User>;
   findBySnsId(snsId: string, snsType: string): Promise<User>;
-  
+
   // default CRUD
   createUser(createUserDto: Partial<User>): Promise<User>;
   findAll(): Promise<User[]>;

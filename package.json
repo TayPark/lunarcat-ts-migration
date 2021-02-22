@@ -10,10 +10,11 @@
     "format": "prettier --write \"src/**/*.ts\" \"__tests__/**/*.ts\"",
     "lint": "eslint --fix \"src/**/*.ts\" \"__tests__/**/*.test.ts\"",
     "lint:init": "eslint --init",
-    "test": "NODE_ENV=test && jest --forceExit --runInBand --detectOpenHandles",
-    "test:cov": "cross-env NODE_ENV=test && jest --coverage",
-    "test:docker": "docker exec -it server yarn test",
-    "test:docker-cov": "docker exec -it server yarn test:cov --forceExit"
+    "test": "NODE_ENV=test && jest --runInBand --detectOpenHandles",
+    "test:cov": "cross-env NODE_ENV=test && jest --coverage --forceExit",
+    "test:docker": "docker exec -it server yarn test --forceExit",
+    "test:watch": "docker exec -it server yarn test --watch",
+    "test:docker-cov": "docker exec -it server yarn test:cov"
   },
   "dependencies": {
     "@slack/webhook": "^5.0.3",

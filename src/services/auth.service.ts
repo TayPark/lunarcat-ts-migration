@@ -14,8 +14,8 @@ class AuthService {
   }
 
   public async findById(userId: string): Promise<User> {
-    const targetUser: User = await this.authRepository.findById(userId);
-    return targetUser;
+    const findUser: User = await this.authRepository.findById(userId);
+    return findUser;
   }
 
   public async findByEmail(userEmail: string): Promise<User> {
@@ -25,6 +25,11 @@ class AuthService {
 
   public async login(email: string, password: string): Promise<User> {
     const findUser: User = await this.authRepository.login(email, password);
+
+    if (!findUser) {
+      throw new HttpException(404, 'User not found')
+    }
+
     return findUser;
   }
 

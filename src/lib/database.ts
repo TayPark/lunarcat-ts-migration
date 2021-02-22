@@ -20,7 +20,7 @@ export const dbConnOpts = {
 
 export const connectDatabase = async () => {
   const dbEnvironment =
-  process.env.NODE_ENV === 'test' ? await memoryDb.getUri() : process.env.MONGO_URI_ALONE;  
+    process.env.NODE_ENV === 'test' ? await memoryDb.getUri() : process.env.MONGO_URI_ALONE;
 
   if (process.env.NODE_ENV === 'development') {
     // enable logging collection methods + arguments to the console/file
@@ -30,7 +30,7 @@ export const connectDatabase = async () => {
   mongoose
     .connect(dbEnvironment, dbConnOpts)
     .then(() => {
-      logger.info(`***MongoDB for ${process.env.NODE_ENV} is connected***`);
+      logger.info(`***MongoDB ${dbEnvironment} is connected***`);
     })
     .catch(error => {
       logger.error(`Unable to connect to database: ${error}`);
@@ -39,10 +39,10 @@ export const connectDatabase = async () => {
 
 export const dropDatabase = async () => {
   if (process.env.NODE_ENV !== 'test') {
-    throw new Error(`Dropping database only allowed on test environment.`)
+    throw new Error(`Dropping database only allowed on test environment.`);
   }
 
   await mongoose.connection.dropDatabase();
-  await mongoose.connection.close();
+  await mongoose.disconnect();
   memoryDb.stop();
-}
+};

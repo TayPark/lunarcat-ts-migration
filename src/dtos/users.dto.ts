@@ -1,4 +1,4 @@
-import { IsEmail, IsNumber, IsObject, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsNumber, IsObject, IsString } from 'class-validator';
 
 export class JoinDto {
   @IsEmail()
