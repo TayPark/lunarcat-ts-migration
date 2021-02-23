@@ -19,7 +19,7 @@ import HttpException from '../lib/httpException';
 import { logger } from '../configs/winston';
 import IntResponse from '../lib/response';
 import MongoAuthRepository from '../repositories/mongo.auth.repo';
-import { BadRequestException } from '../lib/exceptions';
+import { BadRequestException, ForbiddenException, NotFoundException } from '../lib/exceptions';
 
 class AuthController {
   public authService: AuthService = new AuthService(new MongoAuthRepository());
@@ -105,20 +105,19 @@ class AuthController {
               } catch (e) {
                 next(
                   new HttpException(
-                    500,
                     `Failed to send mail for ${userData.email} when processing ${req.originalUrl}`
                   )
                 );
               }
             }
           } else {
-            next(new HttpException(409, 'Duplicated email'));
+            next(new BadRequestException('Duplicated email'));
           }
         } else {
-          next(new HttpException(400, 'Passwords are not matched'));
+          next(new BadRequestException('Passwords are not matched'));
         }
       } else {
-        next(new HttpException(400, 'Check password rule'));
+        next(new BadRequestException('Check password rule'));
       }
     } catch (e) {
       next(e);
@@ -138,7 +137,7 @@ class AuthController {
       const targetUser: User = await this.authService.findByEmail(userData.email);
 
       if (!targetUser) {
-        return new HttpException(400, 'Check your id and password');
+        return new BadRequestException('Check your id and password');
       }
 
       const cryptedPassword: Buffer = crypto.pbkdf2Sync(
@@ -151,7 +150,7 @@ class AuthController {
 
       if (targetUser.password === cryptedPassword.toString('base64')) {
         if (targetUser.deactivatedAt !== null) {
-          return next(new HttpException(409, 'Deactivated account'));
+          return next(new BadRequestException('Deactivated account'));
         }
 
         const authToken: string = jwt.sign(
@@ -176,10 +175,10 @@ class AuthController {
 
         IntResponse(res, 200, responseData);
       } else {
-        next(new HttpException(400, 'Check your id and password'));
+        next(new BadRequestException('Check your id and password'));
       }
     } catch (e) {
-      next(new HttpException(500, `Unknown server error: ${e}`));
+      next(new HttpException(`Unknown server error: ${e}`));
     }
   };
 
@@ -241,7 +240,7 @@ class AuthController {
       }
 
       if (findUser.deactivatedAt !== null) {
-        next(new HttpException(404, 'Deactivated account'));
+        next(new ForbiddenException('Deactivated account'));
       }
 
       const authToken = jwt.sign(
@@ -281,7 +280,7 @@ class AuthController {
     const targetUser: User = await this.authService.findByEmail(email);
 
     if (!targetUser) {
-      next(new HttpException(404, 'User not found'));
+      next(new NotFoundException('User not found'));
     }
 
     const userToken = await (await this.randomBytes(24)).toString('hex');
@@ -311,7 +310,7 @@ class AuthController {
     const inputData: ChangePasswordDto = req.body;
 
     if (inputData.userPwNew !== inputData.userPwNewRe) {
-      next(new HttpException(400, "New password doesn't match"));
+      next(new BadRequestException("New password doesn't match"));
     }
 
     const userPassRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/.test(
@@ -341,10 +340,10 @@ class AuthController {
 
           IntResponse(res, 200, {}, 'Password changed');
         } else {
-          next(new HttpException(400, `User ${inputData.email} not found`));
+          next(new NotFoundException(`User ${inputData.email} not found`));
         }
       } else {
-        next(new HttpException(400, 'Check password rule'));
+        next(new BadRequestException('Check password rule'));
       }
     } catch (e) {
       next(e);
@@ -364,7 +363,7 @@ class AuthController {
       const findUser: User = await this.authService.confirmUser(email, token);
 
       if (!findUser) {
-        throw new HttpException(404, 'User not found');
+        throw new NotFoundException('User not found');
       }
 
       IntResponse(res, 200);

@@ -42,7 +42,7 @@ export const dropDatabase = async () => {
     throw new Error(`Dropping database only allowed on test environment.`);
   }
 
-  logger.info('***Dropping test database***')
+  logger.info('***Dropping test database***');
 
   await mongoose.connection.dropDatabase();
   await mongoose.disconnect();

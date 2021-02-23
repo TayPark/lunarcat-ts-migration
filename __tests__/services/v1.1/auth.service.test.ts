@@ -85,9 +85,9 @@ describe('AuthService', () => {
     });
 
     test('실패: 존재하지 않음', async () => {
-      const findUser: User = await authService.findById("012345678901234567891234");
+      const findUser: User = await authService.findById('012345678901234567891234');
 
-      expect(findUser).toBeFalsy()
+      expect(findUser).toBeFalsy();
     });
   });
 
@@ -108,7 +108,7 @@ describe('AuthService', () => {
     test('실패: 존재하지 않음', async () => {
       const findUser: User = await authService.findByEmail(randomString() + '@email.com');
 
-      expect(findUser).toBeFalsy()
+      expect(findUser).toBeFalsy();
     });
   });
 
@@ -127,15 +127,72 @@ describe('AuthService', () => {
     });
   });
 
-  describe('findBySnsId()', () => {});
+  describe('login()', () => {
+    test('성공', async () => {
+      const userData = {
+        email: randomString() + '@email.com',
+        password: randomString(),
+        nickname: randomString(),
+      };
 
-  describe('login()', () => {});
+      const createUser = await authService.createUser(userData);
+      const login = await authService.login(userData.email, userData.password);
 
-  describe('updateUser()', () => {});
+      expect(createUser._id).toEqual(login._id);
+    });
+
+    test('실패: 존재하지 않는 이메일', async () => {
+      const userData = {
+        email: randomString() + '@email.com',
+        password: randomString(),
+        nickname: randomString(),
+      };
+
+      await authService.createUser(userData);
+
+      try {
+        await authService.login(randomString() + '@email.com', userData.password);
+      } catch (e) {
+        expect(e).toBeInstanceOf(NotFoundException);
+      }
+    });
+
+    test('실패: 비밀번호가 일치하지 않음', async () => {
+      const userData = {
+        email: randomString() + '@email.com',
+        password: randomString(),
+        nickname: randomString(),
+      };
+
+      await authService.createUser(userData);
+
+      try {
+        await authService.login(userData.email, randomString());
+      } catch (e) {
+        expect(e).toBeInstanceOf(NotFoundException);
+      }
+    });
+  });
+
+  describe('updateUser()', () => {
+    test('성공', async () => {
+      const userData = {
+        email: randomString() + '@email.com',
+        password: randomString(),
+        nickname: randomString(),
+      };
+
+      await authService.createUser(userData);
+
+      
+    });
+  });
 
   describe('deleteUser()', () => {});
-  
+
   describe('confirmUser()', () => {});
+
+  describe('findBySnsId()', () => {});
 
   // describe('AuthService.createUser()', () => {
   //   test('성공', async () => {
