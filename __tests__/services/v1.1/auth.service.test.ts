@@ -6,7 +6,8 @@ import { BadRequestException, NotFoundException } from '../../../src/lib/excepti
 import { connectDatabase } from '../../../src/lib/database';
 import MongoAuthRepository from '../../../src/repositories/mongo.auth.repo';
 import AuthService from '../../../src/services/auth.service';
-import { ValidationError } from 'joi';
+import { JoinDto, SnsJoinDto, SnsLoginDto } from '../../../src/dtos/users.dto';
+import { SnsType } from '../../../src/dtos/global.enums';
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -29,10 +30,13 @@ describe('AuthService', () => {
 
   describe('createUser()', () => {
     test('성공', async () => {
-      const userData: Partial<User> = {
+      const userPw = randomString();
+      const userData: JoinDto = {
         email: randomString() + '@email.com',
-        password: randomString(),
-        nickname: randomString(),
+        userPw: userPw,
+        userPwRe: userPw,
+        userNick: randomString(),
+        userLang: 1
       };
 
       const result: User = await authService.createUser(userData);
@@ -40,42 +44,34 @@ describe('AuthService', () => {
       expect(result.email).toEqual(userData.email);
     });
 
-    test('실패: 데이터 오류', async () => {
-      const userData: any = {
-        email: randomString() + '@email.com',
-        userPw: randomString(),
-        languages: randomString(),
-      };
-
-      try {
-        await authService.createUser(userData);
-      } catch (e) {
-        expect(e).toBeInstanceOf(Error);
-      }
-    });
-
     test('실패: 중복 생성', async () => {
-      const userData: Partial<User> = {
+      const userPw = randomString();
+      const userData: JoinDto = {
         email: randomString() + '@email.com',
-        password: randomString(),
-        nickname: randomString(),
+        userPw: userPw,
+        userPwRe: userPw,
+        userNick: randomString(),
+        userLang: 1
       };
 
       try {
         await authService.createUser(userData);
         await authService.createUser(userData);
       } catch (e) {
-        expect(e).toBeInstanceOf(Error);
+        expect(e).toBeInstanceOf(BadRequestException);
       }
     });
   });
 
   describe('findById()', () => {
     test('성공', async () => {
-      const userData: Partial<User> = {
+      const userPw = randomString();
+      const userData: JoinDto = {
         email: randomString() + '@email.com',
-        password: randomString(),
-        nickname: randomString(),
+        userPw: userPw,
+        userPwRe: userPw,
+        userNick: randomString(),
+        userLang: 1
       };
 
       const createUser: User = await authService.createUser(userData);
@@ -93,10 +89,13 @@ describe('AuthService', () => {
 
   describe('findByEmail()', () => {
     test('성공', async () => {
-      const userData: Partial<User> = {
+      const userPw = randomString();
+      const userData: JoinDto = {
         email: randomString() + '@email.com',
-        password: randomString(),
-        nickname: randomString(),
+        userPw: userPw,
+        userPwRe: userPw,
+        userNick: randomString(),
+        userLang: 1
       };
 
       const createUser: User = await authService.createUser(userData);
@@ -114,10 +113,13 @@ describe('AuthService', () => {
 
   describe('findAll()', () => {
     test('성공', async () => {
-      const userData: Partial<User> = {
+      const userPw = randomString();
+      const userData: JoinDto = {
         email: randomString() + '@email.com',
-        password: randomString(),
-        nickname: randomString(),
+        userPw: userPw,
+        userPwRe: userPw,
+        userNick: randomString(),
+        userLang: 1
       };
 
       const createUser: User = await authService.createUser(userData);
@@ -129,39 +131,37 @@ describe('AuthService', () => {
 
   describe('login()', () => {
     test('성공', async () => {
-      const userData: Partial<User> = {
+      const userPw = randomString();
+      const userData: JoinDto = {
         email: randomString() + '@email.com',
-        password: randomString(),
-        nickname: randomString(),
+        userPw: userPw,
+        userPwRe: userPw,
+        userNick: randomString(),
+        userLang: 1
       };
 
       const createUser = await authService.createUser(userData);
-      const login = await authService.login(userData.email, userData.password);
+      const login = await authService.login(userData.email, userData.userPw);
 
       expect(createUser._id).toEqual(login._id);
     });
 
-    test('실패: 존재하지 않는 이메일', async () => {
-      const userData: Partial<User> = {
-        email: randomString() + '@email.com',
-        password: randomString(),
-        nickname: randomString(),
-      };
-
-      await authService.createUser(userData);
-
+    test('실패: 존재하지 않는 이메일', async () => {      
       try {
-        await authService.login(randomString() + '@email.com', userData.password);
+        await authService.login(randomString() + '@email.com', randomString());
       } catch (e) {
         expect(e).toBeInstanceOf(NotFoundException);
       }
     });
 
     test('실패: 비밀번호가 일치하지 않음', async () => {
-      const userData: Partial<User> = {
+      const userPw = randomString();
+      const userData: JoinDto = {
         email: randomString() + '@email.com',
-        password: randomString(),
-        nickname: randomString(),
+        userPw: userPw,
+        userPwRe: userPw,
+        userNick: randomString(),
+        userLang: 1
       };
 
       await authService.createUser(userData);
@@ -169,17 +169,20 @@ describe('AuthService', () => {
       try {
         await authService.login(userData.email, randomString());
       } catch (e) {
-        expect(e).toBeInstanceOf(NotFoundException);
+        expect(e).toBeInstanceOf(BadRequestException);
       }
     });
   });
 
   describe('updateUser()', () => {
     test('성공', async () => {
-      const userData: Partial<User> = {
+      const userPw = randomString();
+      const userData: JoinDto = {
         email: randomString() + '@email.com',
-        password: randomString(),
-        nickname: randomString(),
+        userPw: userPw,
+        userPwRe: userPw,
+        userNick: randomString(),
+        userLang: 1
       };
 
       const updatable: Partial<User> = {
@@ -189,13 +192,25 @@ describe('AuthService', () => {
       }
 
       const createUser: User = await authService.createUser(userData);
-      const updateUser: User = await authService.updateUser(createUser._id, updatable);
+      await authService.updateUser(createUser._id, updatable);
+      const updateUser: User = await authService.findByEmail(userData.email);
       
-      console.warn(createUser);
-      console.warn(updateUser);
-
       expect(createUser._id).toEqual(updateUser._id);
       expect(updateUser.intro).toEqual(updatable.intro);
+    });
+
+    test('실패: 존재하지 않는 유저 Id', async () => {
+      const updatable: Partial<User> = {
+        intro: 'Hello my dear',
+        screenId: 'everytime',
+        displayLanguage: 0
+      }
+
+      try {
+        await authService.updateUser('012345678901234567890123', updatable);
+      } catch (e) {
+        expect(e).toBeInstanceOf(BadRequestException)
+      }
     });
 
     // test('실패: 적절하지 않은 데이터', async () => {
@@ -219,63 +234,115 @@ describe('AuthService', () => {
     // });
   });
 
-  describe('deleteUser()', () => {});
+  describe('deleteUser()', () => {
+    test('성공', async () => {
+      const userPw = randomString();
+      const userData: JoinDto = {
+        email: randomString() + '@email.com',
+        userPw: userPw,
+        userPwRe: userPw,
+        userNick: randomString(),
+        userLang: 1
+      };
+      
+      const createUser: User = await authService.createUser(userData);
+      await authService.deleteUser(createUser._id);
 
-  describe('confirmUser()', () => {});
+      try {
+        await authService.findById(createUser._id);
+      } catch (e) {
+        expect(e).toBeInstanceOf(NotFoundException)
+      }
+    })
 
-  describe('findBySnsId()', () => {});
+    test('실패: 존재하지 않는 유저 삭제 요청', async () => {
+      try {
+        await authService.deleteUser("012345678901234567890123");
+      } catch (e) {
+        expect(e).toBeInstanceOf(NotFoundException);
+      }
+    })
+  });
 
-  // describe('AuthService.createUser()', () => {
-  //   test('성공', async () => {
-  //     const inputData: any = {
-  //       email: randomString() + '@email.com',
-  //       password: randomString(),
-  //       nickname: 'tester',
-  //     };
+  describe('confirmUser()', () => {
+    test('성공', async () => {
+      const userPw = randomString();
+      const userData: JoinDto = {
+        email: randomString() + '@email.com',
+        userPw: userPw,
+        userPwRe: userPw,
+        userNick: randomString(),
+        userLang: 1
+      };
+      
+      const createUser: User = await authService.createUser(userData);
+      await authService.confirmUser(userData.email, createUser.token);
+      const confirmUser: User = await authService.findByEmail(userData.email);      
 
-  //     const allUser: User[] = await authService.findAll();
-  //     authService.createUser(inputData);
-  //     const afterCreation: User[] = await authService.findAll();
+      expect(confirmUser.isConfirmed).toBe(true);
+      expect(confirmUser.token).toBe(null);
+    })
+  });
 
-  //     expect(afterCreation.length).toBeGreaterThan(allUser.length);
-  //   });
+  describe('createSnsUser', () => {
+    test('성공', async () => {
+      const snsJoinData: SnsJoinDto = {
+        uid: (12345678901234).toString(),
+        email: randomString() + '@email.com',
+        profile: 'some_url_here',
+        name: 'googler',
+        displayLanguage: 0,
+        snsType: SnsType.GOOGLE
+      }
 
-  //   test('입력 데이터 부적절', async () => {
-  //     const inputData: any = {
-  //       email: randomString() + '@email.com',
-  //       userPw: 'q1w2e3r4!',
-  //       userPwRe: 'q1w2e3r4!',
-  //       userLang: 1,
-  //       userNick: 'tester',
-  //     };
+      const createUser: User = await authService.createSnsUser(snsJoinData);
 
-  //     try {
-  //       authService.createUser(inputData);
-  //     } catch (e) {
-  //       expect(e).toBeInstanceOf(Error);
-  //     }
-  //   });
-  // })
+      expect(createUser).toBeDefined();
+      expect(createUser.email).toBe(snsJoinData.email)
+    })
 
-  // describe('AuthService.findById', () => {
-  //   test('성공', async () => {
-  //     const inputData: any = {
-  //       email: randomString() + '@email.com',
-  //       password: 'q1w2e3r4!',
-  //       nickname: 'tester',
-  //     };
+    test('실패: 필수 데이터 누락', async () => {
+      const snsJoinData: any = {
+        uid: (12345678901234).toString(),
+        email: randomString() + '@email.com',
+        profile: 'some_url_here',
+        name: 'googler',
+        displayLanguage: 0,
+        // snsType: SnsType.GOOGLE
+      }
+      
+      try {
+        await authService.createSnsUser(snsJoinData);
+      } catch (e) {
+        expect(e).toBeInstanceOf(Error)
+      }
+    })
+  })
 
-  //     const createUser: User = await authService.createUser(inputData);
-  //     const findUser: User = await authService.findById(createUser._id);
-  //     expect(createUser._id.toString()).toBe(findUser._id.toString());
-  //   })
+  describe('findBySnsId()', () => {
+    test('성공', async () => {
+      const snsJoinData: SnsJoinDto = {
+        uid: (12345678901234).toString(),
+        email: randomString() + '@email.com',
+        profile: 'some_url_here',
+        name: 'googler',
+        displayLanguage: 0,
+        snsType: SnsType.GOOGLE
+      }
 
-  //   test('실패', async () => {
-  //     try {
-  //       await authService.findById(randomString(24));
-  //     } catch (e) {
-  //       expect(e).toBeInstanceOf(Error);
-  //     }
-  //   })
-  // })
+      const createUser: User = await authService.createSnsUser(snsJoinData);
+
+      expect(createUser).toBeDefined();
+
+      const findUser: User = await authService.findBySnsId(snsJoinData.uid, snsJoinData.snsType);
+
+      expect(findUser).toBeDefined();
+    })
+
+    test('실패: 존재하지 않음', async () => {
+      const findUser: User = await authService.findBySnsId('12345678901234561', SnsType.GOOGLE);
+
+      expect(findUser).toBeFalsy();
+    });
+  });
 });

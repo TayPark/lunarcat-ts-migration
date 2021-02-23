@@ -229,29 +229,8 @@ class AuthController {
 
     try {
       if (userPassRegex) {
-        const targetUser: User = await this.authService.findByEmail(inputData.email);
-
-        if (targetUser) {
-          const newSalt: string = await (await this.randomBytes(64)).toString('base64');
-          const newPassword: string = await (
-            await crypto.pbkdf2Sync(
-              inputData.userPwNew,
-              newSalt,
-              this.EXEC_NUM,
-              this.RESULT_LENGTH,
-              'sha512'
-            )
-          ).toString('base64');
-
-          await this.authService.updateUser(targetUser._id, {
-            salt: newSalt,
-            password: newPassword,
-          });
-
-          IntResponse(res, 200, {}, 'Password changed');
-        } else {
-          next(new NotFoundException(`User ${inputData.email} not found`));
-        }
+        await this.authService.changePassword(inputData.email, inputData.userPwNew)
+        IntResponse(res, 200, {}, 'Password changed');
       } else {
         next(new BadRequestException('Check password rule'));
       }
@@ -270,12 +249,7 @@ class AuthController {
     const { email, token } = req.query as { [k in string] };
 
     try {
-      const findUser: User = await this.authService.confirmUser(email, token);
-
-      if (!findUser) {
-        throw new NotFoundException('User not found');
-      }
-
+      await this.authService.confirmUser(email, token);
       IntResponse(res, 200);
     } catch (e) {
       next(e);

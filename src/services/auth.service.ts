@@ -6,7 +6,7 @@ import { User } from '../interfaces/users.interface';
 import { NotFoundException, BadRequestException, ForbiddenException } from '../lib/exceptions';
 import HttpException from '../lib/httpException';
 import { AuthRepository } from '../repositories/auth.repo';
-import { JoinDto } from '../dtos/users.dto';
+import { JoinDto, SnsJoinDto } from '../dtos/users.dto';
 class AuthService {
   private readonly authRepository: AuthRepository;
 
@@ -14,7 +14,6 @@ class AuthService {
   private RESULT_LENGTH = parseInt(process.env.RESULT_LENGTH, 10);
 
   private randomBytes = util.promisify(crypto.randomBytes);
-
 
   constructor(authRepository: AuthRepository) {
     this.authRepository = authRepository;
@@ -69,7 +68,7 @@ class AuthService {
     }
 
     if (userData.userPw !== userData.userPwRe) {
-      throw new BadRequestException('Passwords are not matched')
+      throw new BadRequestException('Passwords are not matched');
     }
 
     const generatedId: string = crypto
@@ -101,19 +100,19 @@ class AuthService {
     return createUser;
   }
 
-  public async createSnsUser(snsJoinData: Partial<User>): Promise<User> {
+  public async createSnsUser(snsJoinData: SnsJoinDto): Promise<User> {
     const generateId: string = crypto
-    .createHash('sha256')
-    .update(snsJoinData.email)
-    .digest('hex')
-    .slice(0, 14);
+      .createHash('sha256')
+      .update(snsJoinData.email)
+      .digest('hex')
+      .slice(0, 14);
 
-  const salt: string = await (await this.randomBytes(64)).toString('base64');
+    const salt: string = await (await this.randomBytes(64)).toString('base64');
 
-  const cryptedPassword: string = await crypto
-    .pbkdf2Sync(snsJoinData.email, salt, this.EXEC_NUM, this.RESULT_LENGTH, 'sha512')
-    .toString('base64');
-    
+    const cryptedPassword: string = await crypto
+      .pbkdf2Sync(snsJoinData.email, salt, this.EXEC_NUM, this.RESULT_LENGTH, 'sha512')
+      .toString('base64');
+
     const createUser = await this.authRepository.createUser({
       email: snsJoinData.email,
       password: cryptedPassword,
@@ -126,7 +125,7 @@ class AuthService {
       snsType: snsJoinData.snsType,
       isConfirmed: true,
     });
-    
+
     return createUser;
   }
 
@@ -154,6 +153,24 @@ class AuthService {
     return deleteUser;
   }
 
+  public async changePassword(email: string, userPwNew: string) {
+    const findUser: User = await this.findByEmail(email);
+
+    if (!findUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    const newSalt: string = await (await this.randomBytes(64)).toString('base64');
+    const newPassword: string = await (
+      await crypto.pbkdf2Sync(userPwNew, newSalt, this.EXEC_NUM, this.RESULT_LENGTH, 'sha512')
+    ).toString('base64');
+
+    await this.authRepository.updateUser(findUser._id, {
+      salt: newSalt,
+      password: newPassword,
+    });
+  }
+
   public async confirmUser(email: string, token: string): Promise<User> {
     const findUser: User = await this.authRepository.findByUserDto({ email, token });
 
@@ -165,7 +182,12 @@ class AuthService {
       throw new BadRequestException('Already confirmed');
     }
 
-    return findUser;
+    const confirmUser: User = await this.updateUser(findUser._id, {
+      token: null,
+      isConfirmed: true,
+    });
+
+    return confirmUser;
   }
 
   public async findBySnsId(snsId: string, snsType: string): Promise<User> {
