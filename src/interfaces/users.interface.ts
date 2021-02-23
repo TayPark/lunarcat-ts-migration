@@ -28,4 +28,6 @@ export interface User {
   // SNS Login
   snsId?: string;
   snsType?: string;
+  name?: string;
+  uid?: string;
 }

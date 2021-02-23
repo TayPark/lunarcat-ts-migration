@@ -26,9 +26,9 @@ const userSchema: Schema = new Schema({
   intro: { type: String, default: null },
   banner: userImageSchema,
   profile: userImageSchema,
-  salt: { type: String },
+  salt: { type: String, required: true },
   isConfirmed: { type: Boolean, required: true, default: false },
-  token: { type: String },
+  token: { type: String, default: null },
   snsId: { type: String },
   snsType: { type: String, default: 'normal' },
 });

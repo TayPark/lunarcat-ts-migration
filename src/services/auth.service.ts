@@ -3,7 +3,7 @@ import util from 'util';
 import jwt from 'jsonwebtoken';
 
 import { User } from '../interfaces/users.interface';
-import { NotFoundException, BadRequestException } from '../lib/exceptions';
+import { NotFoundException, BadRequestException, ForbiddenException } from '../lib/exceptions';
 import HttpException from '../lib/httpException';
 import { AuthRepository } from '../repositories/auth.repo';
 import { JoinDto } from '../dtos/users.dto';
@@ -12,9 +12,6 @@ class AuthService {
 
   private EXEC_NUM = parseInt(process.env.EXEC_NUM, 10);
   private RESULT_LENGTH = parseInt(process.env.RESULT_LENGTH, 10);
-  private SECRET_KEY = process.env.SECRET_KEY;
-  private JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN;
-  private MAIL_USER = process.env.MAIL_USER;
 
   private randomBytes = util.promisify(crypto.randomBytes);
 
@@ -39,13 +36,29 @@ class AuthService {
   }
 
   public async login(email: string, password: string): Promise<User> {
-    const findUser: User = await this.authRepository.login(email, password);
+    const findUser: User = await this.authRepository.findByEmail(email);
 
     if (!findUser) {
       throw new NotFoundException('User not found');
     }
 
-    return findUser;
+    const cryptedPassword: Buffer = crypto.pbkdf2Sync(
+      password,
+      findUser.salt,
+      this.EXEC_NUM,
+      this.RESULT_LENGTH,
+      'sha512'
+    );
+
+    if (findUser.password === cryptedPassword.toString('base64')) {
+      if (findUser.deactivatedAt !== null) {
+        throw new ForbiddenException('Deactivated account');
+      }
+
+      return findUser;
+    } else {
+      throw new BadRequestException('Check your id and password');
+    }
   }
 
   public async createUser(userData: JoinDto): Promise<User> {
@@ -85,6 +98,35 @@ class AuthService {
       displayLanguage: userData.userLang,
     });
 
+    return createUser;
+  }
+
+  public async createSnsUser(snsJoinData: Partial<User>): Promise<User> {
+    const generateId: string = crypto
+    .createHash('sha256')
+    .update(snsJoinData.email)
+    .digest('hex')
+    .slice(0, 14);
+
+  const salt: string = await (await this.randomBytes(64)).toString('base64');
+
+  const cryptedPassword: string = await crypto
+    .pbkdf2Sync(snsJoinData.email, salt, this.EXEC_NUM, this.RESULT_LENGTH, 'sha512')
+    .toString('base64');
+    
+    const createUser = await this.authRepository.createUser({
+      email: snsJoinData.email,
+      password: cryptedPassword,
+      salt,
+      nickname: snsJoinData.name,
+      screenId: generateId,
+      displayLanguage: snsJoinData.displayLanguage,
+      profile: snsJoinData.profile,
+      snsId: snsJoinData.uid,
+      snsType: snsJoinData.snsType,
+      isConfirmed: true,
+    });
+    
     return createUser;
   }
 

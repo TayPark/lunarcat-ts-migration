@@ -1,7 +1,6 @@
 import axios from 'axios';
 import crypto from 'crypto';
 import util from 'util';
-import jwt from 'jsonwebtoken';
 import Joi from 'joi';
 import { NextFunction, Request, Response } from 'express';
 
@@ -20,6 +19,7 @@ import { logger } from '../configs/winston';
 import IntResponse from '../lib/response';
 import MongoAuthRepository from '../repositories/mongo.auth.repo';
 import { BadRequestException, ForbiddenException, NotFoundException } from '../lib/exceptions';
+import { jwtTokenMaker } from '../lib/authToken';
 
 class AuthController {
   public authService: AuthService = new AuthService(new MongoAuthRepository());
@@ -81,8 +81,7 @@ class AuthController {
           } catch (e) {
             next(
               new HttpException(
-                `Failed to send mail for ${userEmail} when processing ${req.originalUrl}`,
-                500
+                `Failed to send mail for ${userEmail} when processing ${req.originalUrl}`
               )
             );
           }
@@ -105,50 +104,20 @@ class AuthController {
     const userData: LoginDto = req.body;
 
     try {
-      const targetUser: User = await this.authService.findByEmail(userData.email);
+      const targetUser: User = await this.authService.login(userData.email, userData.userPw);
+      
+      const authToken: string = jwtTokenMaker(targetUser, this.SECRET_KEY, this.JWT_EXPIRES_IN);
 
-      if (!targetUser) {
-        return new BadRequestException('Check your id and password');
-      }
+      const responseData = {
+        authToken,
+        nick: targetUser.nickname,
+        screenId: targetUser.screenId,
+        displayLanguage: targetUser.screenId,
+      };
 
-      const cryptedPassword: Buffer = crypto.pbkdf2Sync(
-        userData.userPw,
-        targetUser.salt,
-        this.EXEC_NUM,
-        this.RESULT_LENGTH,
-        'sha512'
-      );
-
-      if (targetUser.password === cryptedPassword.toString('base64')) {
-        if (targetUser.deactivatedAt !== null) {
-          return next(new BadRequestException('Deactivated account'));
-        }
-
-        const authToken: string = jwt.sign(
-          {
-            nick: targetUser.nickname,
-            uid: targetUser._id,
-            isConfirmed: targetUser.isConfirmed,
-          },
-          this.SECRET_KEY,
-          {
-            expiresIn: this.JWT_EXPIRES_IN,
-          }
-        );
-
-        const responseData = {
-          authToken,
-          nick: targetUser.nickname,
-          screenId: targetUser.screenId,
-          displayLanguage: targetUser.screenId,
-        };
-
-        IntResponse(res, 200, responseData);
-      } else {
-        next(new BadRequestException('Check your id and password'));
-      }
+      IntResponse(res, 200, responseData);
     } catch (e) {
-      next(new HttpException(`Unknown server error: ${e}`));
+      next(e);
     }
   };
 
@@ -163,7 +132,7 @@ class AuthController {
   public snsLogin = async (req: Request, res: Response, next: NextFunction) => {
     const inputData: SnsLoginDto = req.body;
 
-    const snsLoginData =
+    let snsLoginData =
       inputData.snsData instanceof GoogleLoginDto
         ? {
             uid: inputData.snsData.profileObj.googleId,
@@ -182,48 +151,19 @@ class AuthController {
       let findUser: User = await this.authService.findById(snsLoginData.uid);
 
       if (!findUser) {
-        const generateId: string = crypto
-          .createHash('sha256')
-          .update(snsLoginData.email)
-          .digest('hex')
-          .slice(0, 14);
-
-        const salt: string = await (await this.randomBytes(64)).toString('base64');
-
-        const cryptedPassword: string = await crypto
-          .pbkdf2Sync(snsLoginData.email, salt, this.EXEC_NUM, this.RESULT_LENGTH, 'sha512')
-          .toString('base64');
-
-        findUser = await this.authService.createUser({
-          email: snsLoginData.email,
-          password: cryptedPassword,
-          salt,
-          nickname: snsLoginData.name,
-          token: null, // SNS으로 이미 인증된 계정이므로 mail auth를 위한 token을 null로 처리
-          screenId: generateId,
+        const snsJoinData: Partial<User> = {
+          ...snsLoginData,
           displayLanguage: parseInt(inputData.userLang, 10),
-          profile: snsLoginData.profile,
-          snsId: snsLoginData.uid,
-          snsType: inputData.snsType,
-          isConfirmed: true,
-        });
+        };
+
+        findUser = await this.authService.createSnsUser(snsJoinData);
       }
 
       if (findUser.deactivatedAt !== null) {
         next(new ForbiddenException('Deactivated account'));
       }
 
-      const authToken = jwt.sign(
-        {
-          nick: findUser.nickname,
-          uid: findUser._id,
-          isConfirmed: findUser.isConfirmed,
-        },
-        this.SECRET_KEY,
-        {
-          expiresIn: this.JWT_EXPIRES_IN,
-        }
-      );
+      const authToken = jwtTokenMaker(findUser, this.SECRET_KEY, this.JWT_EXPIRES_IN);
 
       const responseData = {
         token: authToken,
