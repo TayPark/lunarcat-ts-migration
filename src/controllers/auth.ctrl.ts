@@ -105,7 +105,7 @@ class AuthController {
 
     try {
       const targetUser: User = await this.authService.login(userData.email, userData.userPw);
-      
+
       const authToken: string = jwtTokenMaker(targetUser, this.SECRET_KEY, this.JWT_EXPIRES_IN);
 
       const responseData = {
@@ -229,7 +229,7 @@ class AuthController {
 
     try {
       if (userPassRegex) {
-        await this.authService.changePassword(inputData.email, inputData.userPwNew)
+        await this.authService.changePassword(inputData.email, inputData.userPwNew);
         IntResponse(res, 200, {}, 'Password changed');
       } else {
         next(new BadRequestException('Check password rule'));

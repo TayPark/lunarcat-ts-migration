@@ -172,14 +172,18 @@ class AuthService {
   }
 
   public async confirmUser(email: string, token: string): Promise<User> {
-    const findUser: User = await this.authRepository.findByUserDto({ email, token });
+    const findUser: User = await this.authRepository.findByEmail(email);
 
     if (!findUser) {
-      throw new BadRequestException('Not a user');
+      throw new NotFoundException('User not found');
     }
 
     if (findUser.token === null && findUser.isConfirmed === true) {
-      throw new BadRequestException('Already confirmed');
+      throw new ForbiddenException('Already confirmed');
+    }
+
+    if (findUser.token !== token) {
+      throw new BadRequestException('Data not matched')
     }
 
     const confirmUser: User = await this.updateUser(findUser._id, {

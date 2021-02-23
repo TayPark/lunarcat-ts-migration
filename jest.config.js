@@ -17,6 +17,7 @@ module.exports = {
 
     /* service testing */
     // "./__tests__/services/v1.1/*.test.ts",
+    // "./__tests__/services/v1.1/auth.service.test.ts",
   ],
 
   // Triggered before all test cases start
