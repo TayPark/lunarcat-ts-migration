@@ -1,19 +1,10 @@
 class HttpException extends Error {
-  public statusCode: number;
   public message: string;
+  public status: number = 500;
 
-  constructor(message: string, statusCode: number = 500) {
+  constructor(message: string = 'Internal Server Error') {
     super(message);
-    this.statusCode = statusCode;
     this.message = message;
-  }
-
-  getStatusCode() {
-    return this.statusCode;
-  }
-
-  getMessage() {
-    return this.message;
   }
 }
 

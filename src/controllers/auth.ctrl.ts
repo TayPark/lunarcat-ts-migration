@@ -55,7 +55,7 @@ class AuthController {
 
       await joinSchema.validateAsync(userData);
     } catch (e) {
-      return next(new BadRequestException(`Input validation failed: ${e}`));
+      return next(new BadRequestException(`Validation falied: ${e}`));
     }
 
     const userPassRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/.test(
@@ -64,57 +64,28 @@ class AuthController {
 
     try {
       if (userPassRegex) {
-        if (userData.userPw === userData.userPwRe) {
-          if (!(await this.authService.findByEmail(userData.email))) {
-            const generatedId: string = crypto
-              .createHash('sha256')
-              .update(userData.email)
-              .digest('hex')
-              .slice(0, 14);
-            const salt: string = await (await this.randomBytes(64)).toString('base64');
-            const cryptedPassword: Buffer = crypto.pbkdf2Sync(
-              userData.userPw,
-              salt,
-              this.EXEC_NUM,
-              this.RESULT_LENGTH,
-              'sha512'
+        const { email: userEmail, token: authToken } = await this.authService.createUser(userData);
+
+        if (authToken) {
+          const mailOption = {
+            from: this.MAIL_USER,
+            to: userEmail,
+            subject: '이메일 인증을 완료해주세요.',
+            html: emailText(userEmail, authToken),
+          };
+
+          try {
+            transporter.sendMail(mailOption);
+            logger.info(`Sended mail to ${userEmail}`);
+            IntResponse(res, 201, {}, 'Mail sent');
+          } catch (e) {
+            next(
+              new HttpException(
+                `Failed to send mail for ${userEmail} when processing ${req.originalUrl}`,
+                500
+              )
             );
-            const authToken = cryptedPassword.toString('hex').slice(0, 24);
-            const createUser = await this.authService.createUser({
-              email: userData.email,
-              nickname: userData.userNick,
-              screenId: generatedId,
-              password: cryptedPassword.toString('base64'),
-              salt,
-              token: authToken,
-              displayLanguage: userData.userLang,
-            });
-
-            if (createUser) {
-              const mailOption = {
-                from: this.MAIL_USER,
-                to: userData.email,
-                subject: '이메일 인증을 완료해주세요.',
-                html: emailText(userData.email, authToken),
-              };
-
-              try {
-                transporter.sendMail(mailOption);
-                logger.info(`Sended mail to ${userData.email}`);
-                IntResponse(res, 201, {}, 'Mail sent');
-              } catch (e) {
-                next(
-                  new HttpException(
-                    `Failed to send mail for ${userData.email} when processing ${req.originalUrl}`
-                  )
-                );
-              }
-            }
-          } else {
-            next(new BadRequestException('Duplicated email'));
           }
-        } else {
-          next(new BadRequestException('Passwords are not matched'));
         }
       } else {
         next(new BadRequestException('Check password rule'));
@@ -166,7 +137,6 @@ class AuthController {
         );
 
         const responseData = {
-          result: 'ok',
           authToken,
           nick: targetUser.nickname,
           screenId: targetUser.screenId,

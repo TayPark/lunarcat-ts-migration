@@ -29,7 +29,7 @@ describe('AuthService', () => {
 
   describe('createUser()', () => {
     test('성공', async () => {
-      const userData = {
+      const userData: Partial<User> = {
         email: randomString() + '@email.com',
         password: randomString(),
         nickname: randomString(),
@@ -41,7 +41,7 @@ describe('AuthService', () => {
     });
 
     test('실패: 데이터 오류', async () => {
-      const userData = {
+      const userData: any = {
         email: randomString() + '@email.com',
         userPw: randomString(),
         languages: randomString(),
@@ -55,7 +55,7 @@ describe('AuthService', () => {
     });
 
     test('실패: 중복 생성', async () => {
-      const userData = {
+      const userData: Partial<User> = {
         email: randomString() + '@email.com',
         password: randomString(),
         nickname: randomString(),
@@ -72,7 +72,7 @@ describe('AuthService', () => {
 
   describe('findById()', () => {
     test('성공', async () => {
-      const userData = {
+      const userData: Partial<User> = {
         email: randomString() + '@email.com',
         password: randomString(),
         nickname: randomString(),
@@ -93,7 +93,7 @@ describe('AuthService', () => {
 
   describe('findByEmail()', () => {
     test('성공', async () => {
-      const userData = {
+      const userData: Partial<User> = {
         email: randomString() + '@email.com',
         password: randomString(),
         nickname: randomString(),
@@ -114,7 +114,7 @@ describe('AuthService', () => {
 
   describe('findAll()', () => {
     test('성공', async () => {
-      const userData = {
+      const userData: Partial<User> = {
         email: randomString() + '@email.com',
         password: randomString(),
         nickname: randomString(),
@@ -129,7 +129,7 @@ describe('AuthService', () => {
 
   describe('login()', () => {
     test('성공', async () => {
-      const userData = {
+      const userData: Partial<User> = {
         email: randomString() + '@email.com',
         password: randomString(),
         nickname: randomString(),
@@ -142,7 +142,7 @@ describe('AuthService', () => {
     });
 
     test('실패: 존재하지 않는 이메일', async () => {
-      const userData = {
+      const userData: Partial<User> = {
         email: randomString() + '@email.com',
         password: randomString(),
         nickname: randomString(),
@@ -158,7 +158,7 @@ describe('AuthService', () => {
     });
 
     test('실패: 비밀번호가 일치하지 않음', async () => {
-      const userData = {
+      const userData: Partial<User> = {
         email: randomString() + '@email.com',
         password: randomString(),
         nickname: randomString(),
@@ -176,16 +176,47 @@ describe('AuthService', () => {
 
   describe('updateUser()', () => {
     test('성공', async () => {
-      const userData = {
+      const userData: Partial<User> = {
         email: randomString() + '@email.com',
         password: randomString(),
         nickname: randomString(),
       };
 
-      await authService.createUser(userData);
+      const updatable: Partial<User> = {
+        intro: 'Hello my dear',
+        screenId: 'everytime',
+        displayLanguage: 0
+      }
 
+      const createUser: User = await authService.createUser(userData);
+      const updateUser: User = await authService.updateUser(createUser._id, updatable);
       
+      console.warn(createUser);
+      console.warn(updateUser);
+
+      expect(createUser._id).toEqual(updateUser._id);
+      expect(updateUser.intro).toEqual(updatable.intro);
     });
+
+    // test('실패: 적절하지 않은 데이터', async () => {
+    //   const userData: Partial<User> = {
+    //     email: randomString() + '@email.com',
+    //     password: randomString(),
+    //     nickname: randomString(),
+    //   };
+
+    //   const updatable: any = {
+    //     intro: 'Hello my dear',
+    //     screenId: 'everytime',
+    //     displayLanguage: 0
+    //   }
+
+    //   const createUser: User = await authService.createUser(userData);
+    //   const updateUser: User = await authService.updateUser(createUser._id, updatable);
+      
+    //   expect(createUser._id).toEqual(updateUser._id);
+    //   expect(createUser.intro).toEqual(updatable.intro);
+    // });
   });
 
   describe('deleteUser()', () => {});

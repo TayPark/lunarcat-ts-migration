@@ -3,6 +3,7 @@ import Slack from 'slack-node';
 
 import HttpException from '../lib/httpException';
 import { logger } from '../configs/winston';
+import IResponse from '../lib/response';
 
 const errorMiddleware = (error: HttpException, req: Request, res: Response, next: NextFunction) => {
   const status: number = error.status || 500;
@@ -23,7 +24,8 @@ const errorMiddleware = (error: HttpException, req: Request, res: Response, next
       );
     }
     logger.error(`StatusCode : ${status}, Message : ${message}`);
-    res.status(status).json({ result: 'error', status, message });
+    IResponse(res, status, {}, message);
+    // res.status(status).json({ result: 'error', status, message });
   } catch (error) {
     next(error);
   }

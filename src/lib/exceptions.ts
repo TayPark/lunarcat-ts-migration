@@ -1,7 +1,5 @@
-import HttpException from './httpException';
-
 // 400
-export class BadRequestException extends HttpException {
+export class BadRequestException extends Error {
   /**
    * @example
    * `throw new BadRequestException()`
@@ -9,13 +7,16 @@ export class BadRequestException extends HttpException {
    * @description
    * The server could not understand the request due to invalid syntax.
    */
-  constructor(message: string = 'BadRequest', statusCode: number = 401) {
-    super(message, statusCode);
+  message: string;
+  status: number = 400;
+  constructor(message: string = 'BadRequest') {
+    super(message);
+    this.message = message;
   }
 }
 
 // 401
-export class UnauthorizedException extends HttpException {
+export class UnauthorizedException extends Error {
   /**
    * @example
    * `throw new UnauthorizedException()`
@@ -24,13 +25,16 @@ export class UnauthorizedException extends HttpException {
    * Although the HTTP standard specifies "unauthorized", semantically this response means
    * "unauthenticated". That is, the client must authenticate itself to get the requested response.
    */
-  constructor(message: string = 'Unauthorized', statusCode: number = 401) {
-    super(message, statusCode);
+  message: string;
+  status: number = 401;
+  constructor(message: string = 'UnAuthorized') {
+    super(message);
+    this.message = message;
   }
 }
 
 // 403
-export class ForbiddenException extends HttpException {
+export class ForbiddenException extends Error {
   /**
    * @example
    * `throw new ForbiddenException()`
@@ -40,13 +44,16 @@ export class ForbiddenException extends HttpException {
    * that is, it is unauthorized, so the server is refusing to give the requested resource.
    * Unlike 401, the client's identity is known to the server.
    */
-  constructor(message: string = 'Forbidden', statusCode: number = 403) {
-    super(message, statusCode);
+  message: string;
+  status: number = 403;
+  constructor(message: string = 'Forbidden') {
+    super(message);
+    this.message = message;
   }
 }
 
 // 404
-export class NotFoundException extends HttpException {
+export class NotFoundException extends Error {
   /**
    * @example
    * `throw new NotFoundException()`
@@ -56,21 +63,25 @@ export class NotFoundException extends HttpException {
    * does not exist. Servers may also send this response instead of 403
    * to hide the existence of a resource from an unauthorized client.
    */
-  constructor(message: string = 'Forbidden', statusCode: number = 404) {
-    super(message, statusCode);
+  message: string;
+  status: number = 404;
+  constructor(message: string = 'NotFound') {
+    super(message);
+    this.message = message;
   }
 }
 
 // 405
-export class MethodNotAllowedException extends HttpException {
-  /**
-   * @example
-   * `throw new MethodNotAllowedException()`
-   *
-   * @description
-   * The request method is known by the server but has been disabled and cannot be used.
-   */
-  constructor(message: string = 'MethodNotAllowed', statusCode: number = 405) {
-    super(message, statusCode);
-  }
-}
+// export class MethodNotAllowedException extends Error {
+//   /**
+//    * @example
+//    * `throw new MethodNotAllowedException()`
+//    *
+//    * @description
+//    * The request method is known by the server but has been disabled and cannot be used.
+//    */
+//   constructor(message: string = 'MethodNotAllowed', status: number = 405) {
+//     super(message);
+//     this.status = status;
+//   }
+// }

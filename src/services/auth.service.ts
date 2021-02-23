@@ -1,9 +1,23 @@
+import crypto from 'crypto';
+import util from 'util';
+import jwt from 'jsonwebtoken';
+
 import { User } from '../interfaces/users.interface';
 import { NotFoundException, BadRequestException } from '../lib/exceptions';
 import HttpException from '../lib/httpException';
 import { AuthRepository } from '../repositories/auth.repo';
+import { JoinDto } from '../dtos/users.dto';
 class AuthService {
   private readonly authRepository: AuthRepository;
+
+  private EXEC_NUM = parseInt(process.env.EXEC_NUM, 10);
+  private RESULT_LENGTH = parseInt(process.env.RESULT_LENGTH, 10);
+  private SECRET_KEY = process.env.SECRET_KEY;
+  private JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN;
+  private MAIL_USER = process.env.MAIL_USER;
+
+  private randomBytes = util.promisify(crypto.randomBytes);
+
 
   constructor(authRepository: AuthRepository) {
     this.authRepository = authRepository;
@@ -34,19 +48,44 @@ class AuthService {
     return findUser;
   }
 
-  public async createUser(userData: Partial<User>): Promise<User> {
-    if (!userData) {
-      throw new BadRequestException('Input data is not satisfied');
-    }
-
+  public async createUser(userData: JoinDto): Promise<User> {
     const findUser: User = await this.authRepository.findByEmail(userData.email);
 
     if (findUser) {
       throw new BadRequestException(`Duplicated email ${userData.email}`);
     }
 
-    const createUserData: User = await this.authRepository.createUser(userData);
-    return createUserData;
+    if (userData.userPw !== userData.userPwRe) {
+      throw new BadRequestException('Passwords are not matched')
+    }
+
+    const generatedId: string = crypto
+      .createHash('sha256')
+      .update(userData.email)
+      .digest('hex')
+      .slice(0, 14);
+    const salt: string = await (await this.randomBytes(64)).toString('base64');
+    const cryptedPassword: Buffer = crypto.pbkdf2Sync(
+      userData.userPw,
+      salt,
+      this.EXEC_NUM,
+      this.RESULT_LENGTH,
+      'sha512'
+    );
+
+    const authToken = cryptedPassword.toString('hex').slice(0, 24);
+
+    const createUser: User = await this.authRepository.createUser({
+      email: userData.email,
+      nickname: userData.userNick,
+      screenId: generatedId,
+      password: cryptedPassword.toString('base64'),
+      salt,
+      token: authToken,
+      displayLanguage: userData.userLang,
+    });
+
+    return createUser;
   }
 
   public async updateUser(userId: string, userData: Partial<User>): Promise<User> {
