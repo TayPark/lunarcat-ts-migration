@@ -11,6 +11,8 @@ import {
   ChangePasswordDto,
   SnsLoginDto,
   SnsJoinDto,
+  FacebookLoginDto,
+  SnsLoginDtoActual,
 } from '../dtos/users.dto';
 import AuthService from '../services/auth.service';
 import transporter, { emailText, findPassText } from '../lib/sendMail';
@@ -134,36 +136,48 @@ class AuthController {
   public snsLogin = async (req: Request, res: Response, next: NextFunction) => {
     const inputData: SnsLoginDto = req.body;
 
-    let snsLoginData =
-      inputData.snsData instanceof GoogleLoginDto
-        ? {
-            uid: inputData.snsData.profileObj.googleId,
-            email: inputData.snsData.profileObj.email,
-            profile: inputData.snsData.profileObj.imageUrl,
-            name: inputData.snsData.profileObj.name,
-          }
-        : {
-            uid: inputData.snsData.id,
-            email: inputData.snsData.email,
-            profile: await this.getFbProfile(inputData.snsData.id),
-            name: inputData.snsData.name,
-          };
+    let snsId: string;
+    const { snsType } : { snsType: string } = inputData;
 
+    if (snsType === SnsType.GOOGLE) {
+      snsId = (inputData.snsData as GoogleLoginDto).profileObj.googleId
+    } else if (snsType === SnsType.FACEBOOK) {
+      snsId = (inputData.snsData as FacebookLoginDto).id
+    } else {
+      return next(new BadRequestException(`We don\'t support SNS login type: ${snsType}`))
+    }
+    
     try {
-      let findUser: User = await this.authService.findById(snsLoginData.uid);
-
-      if (!findUser) {
-        const snsJoinData: any = {
-          ...snsLoginData,
-          snsType: inputData.snsType === 'google' ? SnsType.GOOGLE : SnsType.FACEBOOK,
-          displayLanguage: inputData.userLang,
-        };
-
-        findUser = await this.authService.createSnsUser(snsJoinData);
+      let findUser: User = await this.authService.findBySnsId(snsId, snsType);
+      
+      if (findUser && findUser.deactivatedAt !== null) {
+        return next(new ForbiddenException('Deactivated account'));
       }
 
-      if (findUser.deactivatedAt !== null) {
-        next(new ForbiddenException('Deactivated account'));
+      // 유저가 없으므로 회원가입
+      if (!findUser) {
+        let dataForSnsJoin: SnsJoinDto | any;
+        if (snsType === SnsType.GOOGLE) {
+          dataForSnsJoin = {
+            uid: (inputData.snsData as GoogleLoginDto).profileObj.googleId,
+            email: (inputData.snsData as GoogleLoginDto).profileObj.email,
+            profile: (inputData.snsData as GoogleLoginDto).profileObj.imageUrl,
+            name: (inputData.snsData as GoogleLoginDto).profileObj.name,
+            displayLanguage: inputData.userLang,
+            snsType,
+          }
+        } else if (snsType === SnsType.FACEBOOK) {
+          dataForSnsJoin = {
+            uid: (inputData.snsData as FacebookLoginDto).id,
+            email: (inputData.snsData as FacebookLoginDto).email,
+            profile: await this.getFbProfile(snsId) || null,
+            name: (inputData.snsData as FacebookLoginDto).name,
+            displayLanguage: inputData.userLang,
+            snsType,
+          }
+        } 
+
+        findUser = await this.authService.createSnsUser(dataForSnsJoin);
       }
 
       const authToken = jwtTokenMaker(findUser, this.SECRET_KEY, this.JWT_EXPIRES_IN);
@@ -179,7 +193,7 @@ class AuthController {
     } catch (e) {
       next(e);
     }
-  };
+  };;
 
   /**
    * @description 비밀번호 변경을 위한 인증 이메일 발송
@@ -268,7 +282,8 @@ class AuthController {
 
       return fbProfileImage;
     } catch (e) {
-      throw new Error(e);
+      console.error(`Getting profile for facebook login failed`)
+      throw new BadRequestException(e);
     }
   };
 }

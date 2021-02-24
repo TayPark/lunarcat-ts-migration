@@ -16,9 +16,9 @@ export enum Language {
 }
 
 export enum SnsType {
-  GOOGLE = 'Google',
-  FACEBOOK = 'FaceBook',
-  KAKAO = 'Kakao',
-  APPLE = 'APPLE',
-  NAVER = 'Naver',
+  GOOGLE = 'google',
+  FACEBOOK = 'facebook',
+  KAKAO = 'kakao',
+  APPLE = 'apple',
+  NAVER = 'naver',
 }

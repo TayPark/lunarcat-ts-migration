@@ -5,11 +5,12 @@ import randomString from 'random-string';
 
 import app from '../../../src/app';
 import { connectDatabase } from '../../../src/lib/database';
-import { ChangePasswordDto, JoinDto } from '../../../src/dtos/users.dto';
+import { ChangePasswordDto, JoinDto, SnsLoginDto } from '../../../src/dtos/users.dto';
 import AuthService from '../../../src/services/auth.service';
 import MongoAuthRepository from '../../../src/repositories/mongo.auth.repo';
 import { User } from '../../../src/interfaces/users.interface';
 import { BadRequestException, NotFoundException } from '../../../src/lib/exceptions';
+import { SnsType } from '../../../src/dtos/global.enums';
 
 beforeAll(async () => {
   await connectDatabase();
@@ -106,7 +107,6 @@ describe('/auth', () => {
   });
 
   describe('POST /auth/login 로그인', () => {
-    describe('일반 로그인', () => {
       test('성공 | 200', async () => {
         const inputData: JoinDto = {
           email: randomString() + '@email.com',
@@ -172,12 +172,29 @@ describe('/auth', () => {
           expect(e).toBeInstanceOf(BadRequestException);
         }
       });
-      describe('/auth/snsLogin SNS 로그인', () => {
-        // test('성공 | 200', async () => {});
-        // test('데이터 누락 | 400', async () => {});
-      });
-    });
   });
+  
+  describe('POST /auth/snsLogin SNS 로그인', () => {
+    test('성공 | 200', async () => {
+      const snsLoginData: SnsLoginDto = {
+        snsData: {
+          profileObj: {
+            googleId: '123456781251590',
+            email: randomString() + '@email.com',
+            imageUrl: 'some_image_url',
+            name: 'snsLoginer'
+          }
+        },
+        snsType: SnsType.GOOGLE,
+        userLang: 0
+      }
+      
+      await request(app).post('/auth/snsLogin').send(snsLoginData).expect(200);
+    });
+
+    // test('데이터 누락 | 400', async () => {});
+  });
+
   describe('POST /auth/findPass 비밀번호 변경을 위한 메일 발송', () => {
     test('성공 | 200', async () => {
       const inputData: JoinDto = {
@@ -190,9 +207,31 @@ describe('/auth', () => {
 
       await request(app).post('/auth/join').send(inputData).expect(201);
       
-      /**
-       * 회원가입 이후 /auth/findPass 테스트코드 작성 필요
-       */
+      const findUser: User = await authService.findByEmail(inputData.email)
+
+      await request(app).post('/auth/findPass').send({ email: inputData.email }).expect(200);
+
+      const findAfterEmailSent: User = await authService.findByEmail(inputData.email)
+
+      expect(findUser.token).not.toEqual(findAfterEmailSent.token);
+    });
+
+    test('실패: 존재하지 않는 이메일 | 404', async () => {
+      const inputData: JoinDto = {
+        email: randomString() + '@email.com',
+        userPw: 'q1w2e3r4!',
+        userPwRe: 'q1w2e3r4!',
+        userLang: 0,
+        userNick: 'tester',
+      };
+
+      await request(app).post('/auth/join').send(inputData).expect(201);
+      
+      try {
+        await request(app).post('/auth/findPass').send(randomString());
+      } catch (e) {
+        expect(e).toBeInstanceOf(NotFoundException)
+      }
     });
   });
 

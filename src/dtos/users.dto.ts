@@ -76,11 +76,10 @@ export class SnsJoinDto {
 }
 
 export class SnsLoginDto {
-  @IsObject()
   public snsData: GoogleLoginDto | FacebookLoginDto;
 
   @IsString()
-  public snsType: string;
+  public snsType: SnsType;
 
   @IsString()
   public userLang: number;
