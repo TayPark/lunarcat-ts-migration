@@ -107,92 +107,147 @@ describe('/auth', () => {
   });
 
   describe('POST /auth/login 로그인', () => {
-      test('성공 | 200', async () => {
-        const inputData: JoinDto = {
-          email: randomString() + '@email.com',
-          userPw: 'q1w2e3r4!',
-          userPwRe: 'q1w2e3r4!',
-          userLang: 1,
-          userNick: 'tester',
-        };
-
-        await request(app).post('/auth/join').send(inputData).expect(201);
-        const createUser: User = await authService.findByEmail(inputData.email);
-        await request(app)
-          .post('/auth/mailAuth')
-          .send({ email: inputData.email, token: createUser.token });
-        await request(app).post('/auth/login').send(inputData).expect(200);
-      });
-
-      test('성공: 이메일이 인증되지 않음 | 200', async () => {
-        const inputData: JoinDto = {
-          email: randomString() + '@email.com',
-          userPw: 'q1w2e3r4!',
-          userPwRe: 'q1w2e3r4!',
-          userLang: 1,
-          userNick: 'tester',
-        };
-
-        await request(app).post('/auth/join').send(inputData).expect(201);
-
-        const loginResponse = await request(app).post('/auth/login').send(inputData);
-        const { authToken } = loginResponse.body.data;
-        const decoded: any = await jwt.verify(authToken, process.env.SECRET_KEY);
-
-        expect(decoded.isConfirmed).toBeFalsy();
-      });
-
-      test('실패: 계정이 존재하지 않음 | 404', async () => {
-        try {
-          await request(app)
-            .post('/auth/login')
-            .send({ email: randomString(), userPw: randomString() });
-        } catch (e) {
-          expect(e).toBeInstanceOf(NotFoundException);
-        }
-      });
-
-      test('실패: 비밀번호가 일치하지 않음 | 400', async () => {
-        const inputData: JoinDto = {
-          email: randomString() + '@email.com',
-          userPw: 'q1w2e3r4!',
-          userPwRe: 'q1w2e3r4!',
-          userLang: 0,
-          userNick: 'tester',
-        };
-
-        await request(app).post('/auth/join').send(inputData).expect(201);
-
-        try {
-          await request(app)
-            .post('/auth/login')
-            .send({ email: inputData.email, userPw: randomString() })
-            .expect(400);
-        } catch (e) {
-          expect(e).toBeInstanceOf(BadRequestException);
-        }
-      });
-  });
-  
-  describe('POST /auth/snsLogin SNS 로그인', () => {
     test('성공 | 200', async () => {
-      const snsLoginData: SnsLoginDto = {
+      const inputData: JoinDto = {
+        email: randomString() + '@email.com',
+        userPw: 'q1w2e3r4!',
+        userPwRe: 'q1w2e3r4!',
+        userLang: 1,
+        userNick: 'tester',
+      };
+
+      await request(app).post('/auth/join').send(inputData).expect(201);
+      const createUser: User = await authService.findByEmail(inputData.email);
+      await request(app)
+        .post('/auth/mailAuth')
+        .send({ email: inputData.email, token: createUser.token });
+      await request(app).post('/auth/login').send(inputData).expect(200);
+    });
+
+    test('성공: 이메일이 인증되지 않음 | 200', async () => {
+      const inputData: JoinDto = {
+        email: randomString() + '@email.com',
+        userPw: 'q1w2e3r4!',
+        userPwRe: 'q1w2e3r4!',
+        userLang: 1,
+        userNick: 'tester',
+      };
+
+      await request(app).post('/auth/join').send(inputData).expect(201);
+
+      const loginResponse = await request(app).post('/auth/login').send(inputData);
+      const { authToken } = loginResponse.body.data;
+      const decoded: any = await jwt.verify(authToken, process.env.SECRET_KEY);
+
+      expect(decoded.isConfirmed).toBeFalsy();
+    });
+
+    test('실패: 계정이 존재하지 않음 | 404', async () => {
+      try {
+        await request(app)
+          .post('/auth/login')
+          .send({ email: randomString(), userPw: randomString() });
+      } catch (e) {
+        expect(e).toBeInstanceOf(NotFoundException);
+      }
+    });
+
+    test('실패: 비밀번호가 일치하지 않음 | 400', async () => {
+      const inputData: JoinDto = {
+        email: randomString() + '@email.com',
+        userPw: 'q1w2e3r4!',
+        userPwRe: 'q1w2e3r4!',
+        userLang: 0,
+        userNick: 'tester',
+      };
+
+      await request(app).post('/auth/join').send(inputData).expect(201);
+
+      try {
+        await request(app)
+          .post('/auth/login')
+          .send({ email: inputData.email, userPw: randomString() })
+          .expect(400);
+      } catch (e) {
+        expect(e).toBeInstanceOf(BadRequestException);
+      }
+    });
+  });
+
+  describe('POST /auth/snsLogin SNS 로그인', () => {
+    test('실패: SNS 타입 누락| 400', async () => {
+      const snsLoginData: Partial<SnsLoginDto> = {
         snsData: {
           profileObj: {
             googleId: '123456781251590',
             email: randomString() + '@email.com',
             imageUrl: 'some_image_url',
-            name: 'snsLoginer'
-          }
+            name: 'snsLoginer',
+          },
         },
-        snsType: SnsType.GOOGLE,
-        userLang: 0
+        // snsType: SnsType.GOOGLE,
+        userLang: 0,
+      };
+
+      try {
+        await request(app).post('/auth/snsLogin').send(snsLoginData);
+      } catch (e) {
+        expect(e).toBeInstanceOf(400);
       }
-      
-      await request(app).post('/auth/snsLogin').send(snsLoginData).expect(200);
     });
 
-    // test('데이터 누락 | 400', async () => {});
+    describe('Google', () => {
+      test('성공 | 200', async () => {
+        const snsLoginData: SnsLoginDto = {
+          snsData: {
+            profileObj: {
+              googleId: '123456781251590',
+              email: randomString() + '@email.com',
+              imageUrl: 'some_image_url',
+              name: 'snsLoginer',
+            },
+          },
+          snsType: SnsType.GOOGLE,
+          userLang: 0,
+        };
+
+        await request(app).post('/auth/snsLogin').send(snsLoginData).expect(200);
+      });
+    });
+
+    describe('Facebook', () => {
+      test('성공: Facebook | 200', async () => {
+        const snsLoginData: SnsLoginDto = {
+          snsData: {
+            id: '100006153972685', // taypark's real fb id ...
+            email: randomString() + '@email.com',
+            name: 'facebook login',
+          },
+          snsType: SnsType.FACEBOOK,
+          userLang: 0,
+        };
+
+        await request(app).post('/auth/snsLogin').send(snsLoginData).expect(200);
+      });
+
+      test('실패: Facebook에서 ImageUrl을 찾을 수 없음 | 400', async () => {
+        const snsLoginData: SnsLoginDto = {
+          snsData: {
+            id: '1111111111111111',
+            email: randomString() + '@email.com',
+            name: 'facebook login',
+          },
+          snsType: SnsType.FACEBOOK,
+          userLang: 0,
+        };
+
+        try {
+          await request(app).post('/auth/snsLogin').send(snsLoginData);
+        } catch (e) {
+          expect(e).toBeInstanceOf(BadRequestException);
+        }
+      });
+    });
   });
 
   describe('POST /auth/findPass 비밀번호 변경을 위한 메일 발송', () => {
@@ -206,12 +261,12 @@ describe('/auth', () => {
       };
 
       await request(app).post('/auth/join').send(inputData).expect(201);
-      
-      const findUser: User = await authService.findByEmail(inputData.email)
+
+      const findUser: User = await authService.findByEmail(inputData.email);
 
       await request(app).post('/auth/findPass').send({ email: inputData.email }).expect(200);
 
-      const findAfterEmailSent: User = await authService.findByEmail(inputData.email)
+      const findAfterEmailSent: User = await authService.findByEmail(inputData.email);
 
       expect(findUser.token).not.toEqual(findAfterEmailSent.token);
     });
@@ -226,11 +281,11 @@ describe('/auth', () => {
       };
 
       await request(app).post('/auth/join').send(inputData).expect(201);
-      
+
       try {
         await request(app).post('/auth/findPass').send(randomString());
       } catch (e) {
-        expect(e).toBeInstanceOf(NotFoundException)
+        expect(e).toBeInstanceOf(NotFoundException);
       }
     });
   });
@@ -248,7 +303,7 @@ describe('/auth', () => {
       await request(app).post('/auth/join').send(inputData).expect(201);
 
       const findUser: User = await authService.findByEmail(inputData.email);
-      const newPass: string = '1q2w3e4r!!'
+      const newPass: string = '1q2w3e4r!!';
       const newPassData: ChangePasswordDto = {
         email: inputData.email,
         userPwNew: newPass,

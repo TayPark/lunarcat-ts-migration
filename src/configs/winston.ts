@@ -3,7 +3,7 @@ import winston from 'winston';
 import winstonDaily from 'winston-daily-rotate-file';
 
 // logs dir
-const logDir = __dirname + '/../../logs';
+const logDir = `${__dirname}/../../logs`;
 
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir);
@@ -31,7 +31,7 @@ const logger = winston.createLogger({
     new winstonDaily({
       level: 'info',
       datePattern: 'YYYY-MM-DD',
-      dirname: logDir + '/info', // log file /logs/info/*.log in save
+      dirname: `${logDir}/info`, // log file /logs/info/*.log in save
       filename: `%DATE%.log`,
       maxFiles: 30, // 30 Days saved
       json: false,
@@ -41,7 +41,7 @@ const logger = winston.createLogger({
     new winstonDaily({
       level: 'error',
       datePattern: 'YYYY-MM-DD',
-      dirname: logDir + '/error', // log file /logs/error/*.log in save
+      dirname: `${logDir}/error`, // log file /logs/error/*.log in save
       filename: `%DATE%.error.log`,
       maxFiles: 30, // 30 Days saved
       handleExceptions: true,

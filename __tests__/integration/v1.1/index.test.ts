@@ -1,5 +1,5 @@
-import app from '../../../src/app';
 import request from 'supertest';
+import app from '../../../src/app';
 
 beforeEach(() => {
   // reference error 방지

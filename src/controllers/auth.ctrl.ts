@@ -12,7 +12,6 @@ import {
   SnsLoginDto,
   SnsJoinDto,
   FacebookLoginDto,
-  SnsLoginDtoActual,
 } from '../dtos/users.dto';
 import AuthService from '../services/auth.service';
 import transporter, { emailText, findPassText } from '../lib/sendMail';
@@ -137,19 +136,19 @@ class AuthController {
     const inputData: SnsLoginDto = req.body;
 
     let snsId: string;
-    const { snsType } : { snsType: string } = inputData;
+    const { snsType }: { snsType: string } = inputData;
 
     if (snsType === SnsType.GOOGLE) {
-      snsId = (inputData.snsData as GoogleLoginDto).profileObj.googleId
+      snsId = (inputData.snsData as GoogleLoginDto).profileObj.googleId;
     } else if (snsType === SnsType.FACEBOOK) {
-      snsId = (inputData.snsData as FacebookLoginDto).id
+      snsId = (inputData.snsData as FacebookLoginDto).id;
     } else {
-      return next(new BadRequestException(`We don\'t support SNS login type: ${snsType}`))
+      return next(new BadRequestException(`We don\'t support SNS login type: ${snsType}`));
     }
-    
+
     try {
       let findUser: User = await this.authService.findBySnsId(snsId, snsType);
-      
+
       if (findUser && findUser.deactivatedAt !== null) {
         return next(new ForbiddenException('Deactivated account'));
       }
@@ -165,17 +164,17 @@ class AuthController {
             name: (inputData.snsData as GoogleLoginDto).profileObj.name,
             displayLanguage: inputData.userLang,
             snsType,
-          }
+          };
         } else if (snsType === SnsType.FACEBOOK) {
           dataForSnsJoin = {
             uid: (inputData.snsData as FacebookLoginDto).id,
             email: (inputData.snsData as FacebookLoginDto).email,
-            profile: await this.getFbProfile(snsId) || null,
+            profile: (await this.getFbProfile(snsId)) || null,
             name: (inputData.snsData as FacebookLoginDto).name,
             displayLanguage: inputData.userLang,
             snsType,
-          }
-        } 
+          };
+        }
 
         findUser = await this.authService.createSnsUser(dataForSnsJoin);
       }
@@ -193,7 +192,7 @@ class AuthController {
     } catch (e) {
       next(e);
     }
-  };;
+  };
 
   /**
    * @description 비밀번호 변경을 위한 인증 이메일 발송
@@ -282,7 +281,7 @@ class AuthController {
 
       return fbProfileImage;
     } catch (e) {
-      console.error(`Getting profile for facebook login failed`)
+      console.error(`Getting profile for facebook login failed`);
       throw new BadRequestException(e);
     }
   };
