@@ -1,14 +1,15 @@
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
+import randomString from 'random-string';
 
 import app from '../../../src/app';
 import { connectDatabase } from '../../../src/lib/database';
-import randomString from 'random-string';
 import { JoinDto } from '../../../src/dtos/users.dto';
 import AuthService from '../../../src/services/auth.service';
 import MongoAuthRepository from '../../../src/repositories/mongo.auth.repo';
 import { User } from '../../../src/interfaces/users.interface';
+import { BadRequestException, NotFoundException } from '../../../src/lib/exceptions';
 
 beforeAll(async () => {
   await connectDatabase();
@@ -46,7 +47,7 @@ describe('/auth', () => {
       await request(app).post('/auth/join').send(inputData).expect(400);
     });
 
-    test('중복된 이메일 | 409', async () => {
+    test('중복된 이메일 | 400', async () => {
       const inputData: JoinDto = {
         email: 'test@email.com',
         userPw: 'q1w2e3r4!',
@@ -55,7 +56,7 @@ describe('/auth', () => {
         userNick: 'tester',
       };
 
-      await request(app).post('/auth/join').send(inputData).expect(409);
+      await request(app).post('/auth/join').send(inputData).expect(400);
     });
 
     test('비밀번호 미일치 | 400', async () => {
@@ -70,8 +71,8 @@ describe('/auth', () => {
       await request(app).post('/auth/join').send(inputData).expect(400);
     });
 
-    test('필수 데이터 누락 | 409', () => {
-      const inputData: any = {
+    test('필수 데이터 누락 | 400', () => {
+      const inputData: Partial<JoinDto> = {
         email: randomString() + '@email.com',
         userPw: 'q1w2e3r4!',
         userPwRe: 'q1w2e3r4!',
@@ -120,11 +121,11 @@ describe('/auth', () => {
         expect(decoded.isConfirmed).toBeFalsy();
       });
 
-      test('계정이 존재하지 않음 | 400', async () => {
+      test('계정이 존재하지 않음 | 404', async () => {
         await request(app)
           .post('/auth/login')
           .send({ email: randomString(), userPw: randomString() })
-          .expect(400);
+          .expect(404);
       });
 
       test('비밀번호가 일치하지 않음 | 400', async () => {
@@ -143,101 +144,63 @@ describe('/auth', () => {
           .send({ email: inputData.email, userPw: randomString() })
           .expect(400);
       });
-
-      describe('SNS 로그인', () => {
-        test('성공 | 200', async () => {});
-
-        test('데이터 누락 | 400', async () => {});
-      });
     });
 
-    //   describe('POST /login', () => {
-    //     test('response should have the Set-Cookie header with the Authorization token', async () => {
-    //       const userData: JoinDto = {
-    //         email: 'test@email.com',
-    //         password: 'q1w2e3r4!',
-    //       };
-    //       process.env.JWT_SECRET = 'jwt_secret';
+    describe('SNS 로그인', () => {
+      // test('성공 | 200', async () => {});
+      // test('데이터 누락 | 400', async () => {});
+    });
 
-    //       const authRoute = new AuthRoute();
+    describe('비밀번호 변경', () => {
+      describe('비밀번호 변경을 위한 메일 발송', () => {
+        
+      })
+      // describe('비밀번호 변경', () => {})
+    });
 
-    //       authRoute.authController.authService.users.findOne = jest.fn().mockReturnValue(
-    //         Promise.resolve({
-    //           _id: 0,
-    //           email: 'test@email.com',
-    //           password: await bcrypt.hash(userData.password, 10),
-    //         })
-    //       );
+    describe('메일 인증', () => {
+      test('성공 | 200', async () => {
+        const inputData: JoinDto = {
+          email: randomString() + '@email.com',
+          userPw: 'q1w2e3r4!',
+          userPwRe: 'q1w2e3r4!',
+          userLang: 0,
+          userNick: 'tester',
+        };
 
-    //       (mongoose as JoinDto).connect = jest.fn();
-    //       const app = new app([authRoute]);
-    //       return request(app.getapp())
-    //         .post('/login')
-    //         .send(userData)
-    //         .expect('Set-Cookie', /^Authorization=.+/);
-    //     });
-    //   });
+        await request(app).post('/auth/join').send(inputData).expect(201);
+        const findUser: User = await authService.findByEmail(inputData.email);
 
-    //   describe('POST /logout', () => {
-    //     test('logout Set-Cookie Authorization=; Max-age=0', () => {
-    //       const authRoute = new AuthRoute();
+        await request(app)
+          .get(`/auth/mailAuth?email=${inputData.email}&token=${findUser.token}`)
+          .expect(200);
+      });
 
-    //       const app = new app([authRoute]);
-    //       return request(app.getapp())
-    //         .post('/logout')
-    //         .expect('Set-Cookie', /^Authorization=\;/);
-    //     });
-    //   });
-    // });
+      test('실패: 메일이 존재하지 않음 | 404', async () => {
+        try {
+          await request(app).get(`/auth/mailAuth?email=${randomString()}&token=${randomString()}`);
+        } catch (e) {
+          expect(e).toBeInstanceOf(NotFoundException);
+        }
+      });
 
-    // describe('Testing AuthService', () => {
-    //   describe('when creating a cookie', () => {
-    //     test('should return a string', () => {
-    //       const tokenData: TokenData = {
-    //         token: '',
-    //         expiresIn: 1,
-    //       };
-
-    //       const authService = new AuthService();
-
-    //       expect(typeof authService.createCookie(tokenData)).toEqual('string');
-    //     });
-    //   });
-
-    //   describe('when registering a user', () => {
-    //     describe('if the email is already token', () => {
-    //       test('should throw an error', async () => {
-    //         const userData: JoinDto = {
-    //           email: 'test@email.com',
-    //           password: 'q1w2e3r4!',
-    //         };
-
-    //         const authService = new AuthService();
-
-    //         authService.users.findOne = jest.fn().mockReturnValue(Promise.resolve(userData));
-
-    //         await expect(authService.signup(userData)).rejects.toMatchObject(
-    //           new HttpException(400, `JoinDto with email ${userData.email} already exists`)
-    //         );
-    //       });
-    //     });
-
-    //     describe('if the email is not token', () => {
-    //       test('should not throw an error', async () => {
-    //         const userData: JoinDto = {
-    //           email: 'test@email.com',
-    //           password: 'q1w2e3r4!',
-    //         };
-    //         process.env.JWT_SECRET = 'jwt_secret';
-
-    //         const authService = new AuthService();
-
-    //         authService.users.findOne = jest.fn().mockReturnValue(Promise.resolve(undefined));
-
-    //         authService.users.create = jest.fn().mockReturnValue({ _id: 0, ...userData });
-
-    //         await expect(authService.signup(userData)).resolves.toBeDefined();
-    //       });
-    //     });
+      test('실패: 토큰이 일치하지 않음 | 404', async () => {
+        const inputData: JoinDto = {
+          email: randomString() + '@email.com',
+          userPw: 'q1w2e3r4!',
+          userPwRe: 'q1w2e3r4!',
+          userLang: 0,
+          userNick: 'tester',
+        };
+  
+        await request(app).post('/auth/join').send(inputData).expect(201);
+  
+        try {
+          await request(app).get(`/auth/mailAuth?email=${inputData.email}&token=${randomString()}`);
+        } catch (e) {
+          expect(e).toBeInstanceOf(BadRequestException);
+        }
+      });
+    });
   });
 });

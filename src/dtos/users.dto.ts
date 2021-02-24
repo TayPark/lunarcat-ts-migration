@@ -114,3 +114,20 @@ export class GoogleProfileDto {
   @IsString()
   name: string;
 }
+
+export class UserProfileDto {
+  @IsString()
+  public screenId?: string;
+
+  @IsString()
+  public intro?: string;
+
+  @IsNumber()
+  public displayLanguage?: number;
+
+  @IsObject()
+  public banner?: object;
+
+  @IsObject()
+  public profile?: object;
+}

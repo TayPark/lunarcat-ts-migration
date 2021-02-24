@@ -2,14 +2,18 @@ import mongoose from 'mongoose';
 import randomString from 'random-string';
 
 import { User } from '../../../src/interfaces/users.interface';
-import { BadRequestException, ForbiddenException, NotFoundException } from '../../../src/lib/exceptions';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '../../../src/lib/exceptions';
 import { connectDatabase } from '../../../src/lib/database';
 import MongoAuthRepository from '../../../src/repositories/mongo.auth.repo';
 import AuthService from '../../../src/services/auth.service';
 import { JoinDto, SnsJoinDto, SnsLoginDto } from '../../../src/dtos/users.dto';
 import { SnsType } from '../../../src/dtos/global.enums';
 
-describe('AuthService (25)', () => {
+describe('AuthService', () => {
   let authService: AuthService;
 
   beforeAll(async () => {
@@ -344,7 +348,7 @@ describe('AuthService (25)', () => {
 
       try {
         await authService.confirmUser(randomString() + '@email.com', createUser.token);
-      } catch(e) {
+      } catch (e) {
         expect(e).toBeInstanceOf(NotFoundException);
       }
     });
@@ -364,7 +368,7 @@ describe('AuthService (25)', () => {
 
       try {
         await authService.confirmUser(userData.email, createUser.token);
-      } catch(e) {
+      } catch (e) {
         expect(e).toBeInstanceOf(ForbiddenException);
       }
     });
@@ -380,12 +384,12 @@ describe('AuthService (25)', () => {
       };
 
       const createUser: User = await authService.createUser(userData);
-      
+
       try {
         await authService.confirmUser(userData.email, randomString());
       } catch (e) {
-        expect(e).toBeInstanceOf(BadRequestException)
-      }    
+        expect(e).toBeInstanceOf(BadRequestException);
+      }
     });
   });
 

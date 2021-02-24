@@ -10,6 +10,7 @@ import {
   GoogleLoginDto,
   ChangePasswordDto,
   SnsLoginDto,
+  SnsJoinDto,
 } from '../dtos/users.dto';
 import AuthService from '../services/auth.service';
 import transporter, { emailText, findPassText } from '../lib/sendMail';
@@ -20,6 +21,7 @@ import IntResponse from '../lib/response';
 import MongoAuthRepository from '../repositories/mongo.auth.repo';
 import { BadRequestException, ForbiddenException, NotFoundException } from '../lib/exceptions';
 import { jwtTokenMaker } from '../lib/authToken';
+import { SnsType } from '../dtos/global.enums';
 
 class AuthController {
   public authService: AuthService = new AuthService(new MongoAuthRepository());
@@ -151,9 +153,10 @@ class AuthController {
       let findUser: User = await this.authService.findById(snsLoginData.uid);
 
       if (!findUser) {
-        const snsJoinData: Partial<User> = {
+        const snsJoinData: any = {
           ...snsLoginData,
-          displayLanguage: parseInt(inputData.userLang, 10),
+          snsType: inputData.snsType === 'google' ? SnsType.GOOGLE : SnsType.FACEBOOK,
+          displayLanguage: inputData.userLang,
         };
 
         findUser = await this.authService.createSnsUser(snsJoinData);

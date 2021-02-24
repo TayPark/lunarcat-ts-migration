@@ -171,7 +171,7 @@ class AuthService {
     });
   }
 
-  public async confirmUser(email: string, token: string): Promise<User> {
+  public async confirmUser(email: string, token: string): Promise<boolean> {
     const findUser: User = await this.authRepository.findByEmail(email);
 
     if (!findUser) {
@@ -183,15 +183,19 @@ class AuthService {
     }
 
     if (findUser.token !== token) {
-      throw new BadRequestException('Data not matched')
+      throw new BadRequestException('Data not matched');
     }
 
-    const confirmUser: User = await this.updateUser(findUser._id, {
+    const confirmation = await this.updateUser(findUser._id, {
       token: null,
       isConfirmed: true,
     });
 
-    return confirmUser;
+    if (!confirmation) {
+      return false;
+    }
+
+    return true;
   }
 
   public async findBySnsId(snsId: string, snsType: string): Promise<User> {

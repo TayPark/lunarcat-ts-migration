@@ -1,9 +1,8 @@
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
 import Joi from 'joi';
-
-dotenv.config();
+import { Request, Response, NextFunction } from 'express';
 
 // 예외 페이지들에 대한 route stack의 마지막 async function의 이름을 저장합니다.
 const authExceptions = [
@@ -27,7 +26,7 @@ const { SECRET_KEY } = process.env;
  * @param {*} res HTTP response
  * @param {*} next ExpressJS middleware
  */
-export const verifyToken = async (req, res, next) => {
+export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const clientToken = req.headers['x-access-token'];
     const { name: accessPath } = req.route.stack[req.route.stack.length - 1];
