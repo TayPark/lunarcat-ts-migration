@@ -28,7 +28,7 @@ describe('/auth', () => {
   const authService: AuthService = new AuthService(new MongoAuthRepository());
 
   describe('POST /auth/join 회원가입', () => {
-    test('회원가입 성공 | 201', async () => {
+    test('성공 | 201', async () => {
       const inputData: JoinDto = {
         email: 'test@email.com',
         userPw: 'q1w2e3r4!',
@@ -40,7 +40,7 @@ describe('/auth', () => {
       await request(app).post('/auth/join').send(inputData).expect(201);
     });
 
-    test('이메일 형식이 맞지 않음 | 404', async () => {
+    test('실패: 이메일 형식이 맞지 않음 | 404', async () => {
       const inputData: JoinDto = {
         email: randomString(),
         userPw: 'q1w2e3r4!',
@@ -56,7 +56,7 @@ describe('/auth', () => {
       }
     });
 
-    test('중복된 이메일 | 400', async () => {
+    test('실패: 중복된 이메일 | 400', async () => {
       const inputData: JoinDto = {
         email: 'test@email.com',
         userPw: 'q1w2e3r4!',
@@ -72,7 +72,7 @@ describe('/auth', () => {
       }
     });
 
-    test('비밀번호 미일치 | 400', async () => {
+    test('실패: 비밀번호 미일치 | 400', async () => {
       const inputData: JoinDto = {
         email: 'test1234@email.com',
         userPw: 'q1w2e3r4!!!!',
@@ -88,7 +88,7 @@ describe('/auth', () => {
       }
     });
 
-    test('필수 데이터 누락 | 400', async () => {
+    test('실패: 필수 데이터 누락 | 400', async () => {
       const inputData: Partial<JoinDto> = {
         email: randomString() + '@email.com',
         userPw: 'q1w2e3r4!',
@@ -124,7 +124,7 @@ describe('/auth', () => {
         await request(app).post('/auth/login').send(inputData).expect(200);
       });
 
-      test('이메일이 인증되지 않음 | 200', async () => {
+      test('성공: 이메일이 인증되지 않음 | 200', async () => {
         const inputData: JoinDto = {
           email: randomString() + '@email.com',
           userPw: 'q1w2e3r4!',
@@ -142,7 +142,7 @@ describe('/auth', () => {
         expect(decoded.isConfirmed).toBeFalsy();
       });
 
-      test('계정이 존재하지 않음 | 404', async () => {
+      test('실패: 계정이 존재하지 않음 | 404', async () => {
         try {
           await request(app)
             .post('/auth/login')
@@ -152,7 +152,7 @@ describe('/auth', () => {
         }
       });
 
-      test('비밀번호가 일치하지 않음 | 400', async () => {
+      test('실패: 비밀번호가 일치하지 않음 | 400', async () => {
         const inputData: JoinDto = {
           email: randomString() + '@email.com',
           userPw: 'q1w2e3r4!',
@@ -179,7 +179,7 @@ describe('/auth', () => {
     });
   });
   describe('POST /auth/findPass 비밀번호 변경을 위한 메일 발송', () => {
-    test('비밀번호 변경을 위한 메일 발송 | 200', async () => {
+    test('성공 | 200', async () => {
       const inputData: JoinDto = {
         email: randomString() + '@email.com',
         userPw: 'q1w2e3r4!',
@@ -189,6 +189,10 @@ describe('/auth', () => {
       };
 
       await request(app).post('/auth/join').send(inputData).expect(201);
+      
+      /**
+       * 회원가입 이후 /auth/findPass 테스트코드 작성 필요
+       */
     });
   });
 
@@ -205,9 +209,18 @@ describe('/auth', () => {
       await request(app).post('/auth/join').send(inputData).expect(201);
 
       const findUser: User = await authService.findByEmail(inputData.email);
+      const newPass: string = '1q2w3e4r!!'
+      const newPassData: ChangePasswordDto = {
+        email: inputData.email,
+        userPwNew: newPass,
+        userPwNewRe: newPass,
+        token: findUser.token,
+      };
+
+      await request(app).patch('/auth/findPass').send(newPassData).expect(200);
     });
 
-    test('존재하지 않는 이메일 | 400', async () => {
+    test('실패: 존재하지 않는 이메일 | 400', async () => {
       const inputData: JoinDto = {
         email: randomString() + '@email.com',
         userPw: 'q1w2e3r4!',
@@ -234,7 +247,7 @@ describe('/auth', () => {
       }
     });
 
-    test('비밀번호 정규식 불합격 | 400', async () => {
+    test('실패: 비밀번호 정규식 불합격 | 400', async () => {
       const inputData: JoinDto = {
         email: randomString() + '@email.com',
         userPw: 'q1w2e3r4!',
@@ -261,7 +274,7 @@ describe('/auth', () => {
       }
     });
 
-    test('비밀번호 미일치 | 200', async () => {
+    test('실패: 비밀번호 미일치 | 400', async () => {
       const inputData: JoinDto = {
         email: randomString() + '@email.com',
         userPw: 'q1w2e3r4!',
