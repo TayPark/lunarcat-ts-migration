@@ -159,7 +159,7 @@ describe('AuthService', () => {
       try {
         await authService.login(randomString() + '@email.com', randomString());
       } catch (e) {
-        expect(e).toBeInstanceOf(NotFoundException);
+        expect(e).toBeInstanceOf(BadRequestException);
       }
     });
 
@@ -280,12 +280,14 @@ describe('AuthService', () => {
         userLang: 1,
       };
 
-      const createUser: User = await authService.createUser(userData);
+      await authService.createUser(userData);
+
       const newPassword = randomString();
+
       try {
         await authService.changePassword(randomString(), newPassword);
       } catch (e) {
-        expect(e).toBeInstanceOf(NotFoundException);
+        expect(e).toBeInstanceOf(BadRequestException);
       }
     });
   });
@@ -307,7 +309,7 @@ describe('AuthService', () => {
       try {
         await authService.findById(createUser._id);
       } catch (e) {
-        expect(e).toBeInstanceOf(NotFoundException);
+        expect(e).toBeInstanceOf(BadRequestException);
       }
     });
 
@@ -315,7 +317,7 @@ describe('AuthService', () => {
       try {
         await authService.deleteUser('012345678901234567890123');
       } catch (e) {
-        expect(e).toBeInstanceOf(NotFoundException);
+        expect(e).toBeInstanceOf(BadRequestException);
       }
     });
   });
@@ -354,7 +356,7 @@ describe('AuthService', () => {
       try {
         await authService.confirmUser(randomString() + '@email.com', createUser.token);
       } catch (e) {
-        expect(e).toBeInstanceOf(NotFoundException);
+        expect(e).toBeInstanceOf(BadRequestException);
       }
     });
 

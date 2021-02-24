@@ -3,8 +3,7 @@ import util from 'util';
 import jwt from 'jsonwebtoken';
 
 import { User } from '../interfaces/users.interface';
-import { NotFoundException, BadRequestException, ForbiddenException } from '../lib/exceptions';
-import HttpException from '../lib/httpException';
+import { BadRequestException, ForbiddenException } from '../lib/exceptions';
 import { AuthRepository } from '../repositories/auth.repo';
 import { JoinDto, SnsJoinDto } from '../dtos/users.dto';
 class AuthService {
@@ -38,7 +37,7 @@ class AuthService {
     const findUser: User = await this.authRepository.findByEmail(email);
 
     if (!findUser) {
-      throw new NotFoundException('User not found');
+      throw new BadRequestException('Cannot find user');
     }
 
     const cryptedPassword: Buffer = crypto.pbkdf2Sync(
@@ -147,7 +146,7 @@ class AuthService {
     const deleteUser: User = await this.authRepository.deleteUser(userId);
 
     if (!deleteUser) {
-      throw new NotFoundException('User not found');
+      throw new BadRequestException('Cannot find user');
     }
 
     return deleteUser;
@@ -157,7 +156,7 @@ class AuthService {
     const findUser: User = await this.findByEmail(email);
 
     if (!findUser) {
-      throw new NotFoundException('User not found');
+      throw new BadRequestException('Cannot find user');
     }
 
     const newSalt: string = await (await this.randomBytes(64)).toString('base64');
@@ -175,7 +174,7 @@ class AuthService {
     const findUser: User = await this.authRepository.findByEmail(email);
 
     if (!findUser) {
-      throw new NotFoundException('User not found');
+      throw new BadRequestException('Cannot find user');
     }
 
     if (findUser.token === null && findUser.isConfirmed === true) {
@@ -202,6 +201,18 @@ class AuthService {
     const findUser: User = await this.authRepository.findBySnsId(snsId, snsType);
 
     return findUser;
+  }
+
+  public async deactivateUser(userId: string): Promise<boolean> {
+    const findUser = await this.authRepository.findById(userId);
+
+    if (!findUser) {
+      throw new BadRequestException('Cannot find user. Check id.')
+    }
+
+    await this.authRepository.updateUser(userId, { deactivatedAt: new Date() })
+
+    return true;
   }
 }
 
