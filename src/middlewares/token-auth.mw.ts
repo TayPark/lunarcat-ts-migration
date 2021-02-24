@@ -51,7 +51,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
     } catch (e) {
       console.log(
         `[INFO] 인증 실패: 유저의 토큰이 누락되었거나 적절하지 않습니다. ip: ${
-          req.headers['x-forwarded-for'] || req.connection.remoteAddress
+          req.headers['x-forwarded-for'] || req.socket.remoteAddress
         } token: ${clientToken}`
       );
       return next(createError(401, '인증 실패: 적절하지 않은 인증입니다.'));
@@ -64,7 +64,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
     } catch (e) {
       console.log(
         `[INFO] 인증 실패: 손상된 토큰을 사용하였습니다. ip: ${
-          req.headers['x-forwarded-for'] || req.connection.remoteAddress
+          req.headers['x-forwarded-for'] || req.socket.remoteAddress
         } token: ${clientToken}`
       );
       return next(createError(401, '인증 실패: 적절하지 않은 인증입니다.'));
@@ -83,7 +83,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
     } else {
       console.log(
         `[INFO] 인증 실패: 유저 ${
-          req.headers['x-forwarded-for'] || req.connection.remoteAddress
+          req.headers['x-forwarded-for'] || req.socket.remoteAddress
         } 가 로그인을 시도했으나 토큰의 유효기간이 만료되었거나 토큰이 없습니다.`
       );
       return next(createError(401, '인증 실패: 적절하지 않은 인증입니다.'));

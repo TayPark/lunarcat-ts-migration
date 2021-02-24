@@ -18,6 +18,11 @@ describe('UsersService', () => {
     await connectDatabase();
   });
 
+  beforeEach(() => {
+    // reference error 방지
+    jest.useFakeTimers();
+  });
+
   afterAll(() => {
     mongoose.connection.close();
   });

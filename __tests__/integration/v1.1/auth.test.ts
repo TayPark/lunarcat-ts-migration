@@ -5,7 +5,7 @@ import randomString from 'random-string';
 
 import app from '../../../src/app';
 import { connectDatabase } from '../../../src/lib/database';
-import { JoinDto } from '../../../src/dtos/users.dto';
+import { ChangePasswordDto, JoinDto } from '../../../src/dtos/users.dto';
 import AuthService from '../../../src/services/auth.service';
 import MongoAuthRepository from '../../../src/repositories/mongo.auth.repo';
 import { User } from '../../../src/interfaces/users.interface';
@@ -15,6 +15,11 @@ beforeAll(async () => {
   await connectDatabase();
 });
 
+beforeEach(() => {
+  // reference error 방지
+  jest.useFakeTimers();
+});
+
 afterAll(async () => {
   mongoose.connection.close();
 });
@@ -22,7 +27,7 @@ afterAll(async () => {
 describe('/auth', () => {
   const authService: AuthService = new AuthService(new MongoAuthRepository());
 
-  describe('회원가입', () => {
+  describe('POST /auth/join 회원가입', () => {
     test('회원가입 성공 | 201', async () => {
       const inputData: JoinDto = {
         email: 'test@email.com',
@@ -44,7 +49,11 @@ describe('/auth', () => {
         userNick: 'tester',
       };
 
-      await request(app).post('/auth/join').send(inputData).expect(400);
+      try {
+        await request(app).post('/auth/join').send(inputData);
+      } catch (e) {
+        expect(e).toBeInstanceOf(BadRequestException);
+      }
     });
 
     test('중복된 이메일 | 400', async () => {
@@ -56,7 +65,11 @@ describe('/auth', () => {
         userNick: 'tester',
       };
 
-      await request(app).post('/auth/join').send(inputData).expect(400);
+      try {
+        await request(app).post('/auth/join').send(inputData);
+      } catch (e) {
+        expect(e).toBeInstanceOf(BadRequestException);
+      }
     });
 
     test('비밀번호 미일치 | 400', async () => {
@@ -68,10 +81,14 @@ describe('/auth', () => {
         userNick: 'tester',
       };
 
-      await request(app).post('/auth/join').send(inputData).expect(400);
+      try {
+        await request(app).post('/auth/join').send(inputData);
+      } catch (e) {
+        expect(e).toBeInstanceOf(BadRequestException);
+      }
     });
 
-    test('필수 데이터 누락 | 400', () => {
+    test('필수 데이터 누락 | 400', async () => {
       const inputData: Partial<JoinDto> = {
         email: randomString() + '@email.com',
         userPw: 'q1w2e3r4!',
@@ -80,11 +97,15 @@ describe('/auth', () => {
         userNick: 'tester',
       };
 
-      return request(app).post('/auth/join').send(inputData);
+      try {
+        await request(app).post('/auth/join').send(inputData);
+      } catch (e) {
+        expect(e).toBeInstanceOf(BadRequestException);
+      }
     });
   });
 
-  describe('로그인', () => {
+  describe('POST /auth/login 로그인', () => {
     describe('일반 로그인', () => {
       test('성공 | 200', async () => {
         const inputData: JoinDto = {
@@ -103,7 +124,7 @@ describe('/auth', () => {
         await request(app).post('/auth/login').send(inputData).expect(200);
       });
 
-      test('이메일이 인증되지 않음', async () => {
+      test('이메일이 인증되지 않음 | 200', async () => {
         const inputData: JoinDto = {
           email: randomString() + '@email.com',
           userPw: 'q1w2e3r4!',
@@ -122,10 +143,13 @@ describe('/auth', () => {
       });
 
       test('계정이 존재하지 않음 | 404', async () => {
-        await request(app)
-          .post('/auth/login')
-          .send({ email: randomString(), userPw: randomString() })
-          .expect(404);
+        try {
+          await request(app)
+            .post('/auth/login')
+            .send({ email: randomString(), userPw: randomString() });
+        } catch (e) {
+          expect(e).toBeInstanceOf(NotFoundException);
+        }
       });
 
       test('비밀번호가 일치하지 않음 | 400', async () => {
@@ -139,68 +163,173 @@ describe('/auth', () => {
 
         await request(app).post('/auth/join').send(inputData).expect(201);
 
-        await request(app)
-          .post('/auth/login')
-          .send({ email: inputData.email, userPw: randomString() })
-          .expect(400);
-      });
-    });
-
-    describe('SNS 로그인', () => {
-      // test('성공 | 200', async () => {});
-      // test('데이터 누락 | 400', async () => {});
-    });
-
-    describe('비밀번호 변경', () => {
-      describe('비밀번호 변경을 위한 메일 발송', () => {
-        
-      })
-      // describe('비밀번호 변경', () => {})
-    });
-
-    describe('메일 인증', () => {
-      test('성공 | 200', async () => {
-        const inputData: JoinDto = {
-          email: randomString() + '@email.com',
-          userPw: 'q1w2e3r4!',
-          userPwRe: 'q1w2e3r4!',
-          userLang: 0,
-          userNick: 'tester',
-        };
-
-        await request(app).post('/auth/join').send(inputData).expect(201);
-        const findUser: User = await authService.findByEmail(inputData.email);
-
-        await request(app)
-          .get(`/auth/mailAuth?email=${inputData.email}&token=${findUser.token}`)
-          .expect(200);
-      });
-
-      test('실패: 메일이 존재하지 않음 | 404', async () => {
         try {
-          await request(app).get(`/auth/mailAuth?email=${randomString()}&token=${randomString()}`);
-        } catch (e) {
-          expect(e).toBeInstanceOf(NotFoundException);
-        }
-      });
-
-      test('실패: 토큰이 일치하지 않음 | 404', async () => {
-        const inputData: JoinDto = {
-          email: randomString() + '@email.com',
-          userPw: 'q1w2e3r4!',
-          userPwRe: 'q1w2e3r4!',
-          userLang: 0,
-          userNick: 'tester',
-        };
-  
-        await request(app).post('/auth/join').send(inputData).expect(201);
-  
-        try {
-          await request(app).get(`/auth/mailAuth?email=${inputData.email}&token=${randomString()}`);
+          await request(app)
+            .post('/auth/login')
+            .send({ email: inputData.email, userPw: randomString() })
+            .expect(400);
         } catch (e) {
           expect(e).toBeInstanceOf(BadRequestException);
         }
       });
+      describe('/auth/snsLogin SNS 로그인', () => {
+        // test('성공 | 200', async () => {});
+        // test('데이터 누락 | 400', async () => {});
+      });
+    });
+  });
+  describe('POST /auth/findPass 비밀번호 변경을 위한 메일 발송', () => {
+    test('비밀번호 변경을 위한 메일 발송 | 200', async () => {
+      const inputData: JoinDto = {
+        email: randomString() + '@email.com',
+        userPw: 'q1w2e3r4!',
+        userPwRe: 'q1w2e3r4!',
+        userLang: 0,
+        userNick: 'tester',
+      };
+
+      await request(app).post('/auth/join').send(inputData).expect(201);
+    });
+  });
+
+  describe('PATCH /auth/findPass 비밀번호 변경', () => {
+    test('성공 | 200', async () => {
+      const inputData: JoinDto = {
+        email: randomString() + '@email.com',
+        userPw: 'q1w2e3r4!',
+        userPwRe: 'q1w2e3r4!',
+        userLang: 0,
+        userNick: 'tester',
+      };
+
+      await request(app).post('/auth/join').send(inputData).expect(201);
+
+      const findUser: User = await authService.findByEmail(inputData.email);
+    });
+
+    test('존재하지 않는 이메일 | 400', async () => {
+      const inputData: JoinDto = {
+        email: randomString() + '@email.com',
+        userPw: 'q1w2e3r4!',
+        userPwRe: 'q1w2e3r4!',
+        userLang: 0,
+        userNick: 'tester',
+      };
+
+      await request(app).post('/auth/join').send(inputData).expect(201);
+
+      const findUser: User = await authService.findByEmail(inputData.email);
+      const newPass: string = randomString({ length: 5 });
+      const newPassData: ChangePasswordDto = {
+        email: randomString(),
+        userPwNew: newPass,
+        userPwNewRe: newPass,
+        token: findUser.token,
+      };
+
+      try {
+        await request(app).patch('/auth/findPass').send(newPassData);
+      } catch (e) {
+        expect(e).toBeInstanceOf(NotFoundException);
+      }
+    });
+
+    test('비밀번호 정규식 불합격 | 400', async () => {
+      const inputData: JoinDto = {
+        email: randomString() + '@email.com',
+        userPw: 'q1w2e3r4!',
+        userPwRe: 'q1w2e3r4!',
+        userLang: 0,
+        userNick: 'tester',
+      };
+
+      await request(app).post('/auth/join').send(inputData).expect(201);
+
+      const findUser: User = await authService.findByEmail(inputData.email);
+      const newPass: string = randomString({ length: 5 });
+      const newPassData: ChangePasswordDto = {
+        email: inputData.email,
+        userPwNew: newPass,
+        userPwNewRe: newPass,
+        token: findUser.token,
+      };
+
+      try {
+        await request(app).patch('/auth/findPass').send(newPassData);
+      } catch (e) {
+        expect(e).toBeInstanceOf(BadRequestException);
+      }
+    });
+
+    test('비밀번호 미일치 | 200', async () => {
+      const inputData: JoinDto = {
+        email: randomString() + '@email.com',
+        userPw: 'q1w2e3r4!',
+        userPwRe: 'q1w2e3r4!',
+        userLang: 0,
+        userNick: 'tester',
+      };
+
+      await request(app).post('/auth/join').send(inputData).expect(201);
+
+      const findUser: User = await authService.findByEmail(inputData.email);
+      const newPassData: ChangePasswordDto = {
+        email: inputData.email,
+        userPwNew: randomString({ length: 20 }),
+        userPwNewRe: randomString({ length: 20 }),
+        token: findUser.token,
+      };
+
+      try {
+        await request(app).patch('/auth/findPass').send(newPassData);
+      } catch (e) {
+        expect(e).toBeInstanceOf(BadRequestException);
+      }
+    });
+  });
+
+  describe('GET /auth/mailAuth 메일 인증', () => {
+    test('성공 | 200', async () => {
+      const inputData: JoinDto = {
+        email: randomString() + '@email.com',
+        userPw: 'q1w2e3r4!',
+        userPwRe: 'q1w2e3r4!',
+        userLang: 0,
+        userNick: 'tester',
+      };
+
+      await request(app).post('/auth/join').send(inputData).expect(201);
+      const findUser: User = await authService.findByEmail(inputData.email);
+
+      await request(app)
+        .get(`/auth/mailAuth?email=${inputData.email}&token=${findUser.token}`)
+        .expect(200);
+    });
+
+    test('실패: 메일이 존재하지 않음 | 404', async () => {
+      try {
+        await request(app).get(`/auth/mailAuth?email=${randomString()}&token=${randomString()}`);
+      } catch (e) {
+        expect(e).toBeInstanceOf(NotFoundException);
+      }
+    });
+
+    test('실패: 토큰이 일치하지 않음 | 400', async () => {
+      const inputData: JoinDto = {
+        email: randomString() + '@email.com',
+        userPw: 'q1w2e3r4!',
+        userPwRe: 'q1w2e3r4!',
+        userLang: 0,
+        userNick: 'tester',
+      };
+
+      await request(app).post('/auth/join').send(inputData).expect(201);
+
+      try {
+        await request(app).get(`/auth/mailAuth?email=${inputData.email}&token=${randomString()}`);
+      } catch (e) {
+        expect(e).toBeInstanceOf(BadRequestException);
+      }
     });
   });
 });

@@ -13,6 +13,11 @@ import AuthService from '../../../src/services/auth.service';
 import { JoinDto, SnsJoinDto, SnsLoginDto } from '../../../src/dtos/users.dto';
 import { SnsType } from '../../../src/dtos/global.enums';
 
+beforeEach(() => {
+  // reference error 방지
+  jest.useFakeTimers();
+});
+
 describe('AuthService', () => {
   let authService: AuthService;
 
