@@ -9,7 +9,11 @@ import { ChangePasswordDto, JoinDto, SnsLoginDto } from '../../../src/dtos/users
 import AuthService from '../../../src/services/auth.service';
 import MongoAuthRepository from '../../../src/repositories/mongo.auth.repo';
 import { User } from '../../../src/interfaces/users.interface';
-import { BadRequestException, NotFoundException } from '../../../src/lib/exceptions';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '../../../src/lib/exceptions';
 import { SnsType } from '../../../src/dtos/global.enums';
 
 beforeAll(async () => {
@@ -140,6 +144,28 @@ describe('/auth', () => {
       const decoded: any = await jwt.verify(authToken, process.env.SECRET_KEY);
 
       expect(decoded.isConfirmed).toBeFalsy();
+    });
+
+    test('실패: 비활성 계정 | 403', async () => {
+      const inputData: JoinDto = {
+        email: randomString() + '@email.com',
+        userPw: 'q1w2e3r4!',
+        userPwRe: 'q1w2e3r4!',
+        userLang: 1,
+        userNick: 'tester',
+      };
+
+      await request(app).post('/auth/join').send(inputData).expect(201);
+
+      const findUser: User = await authService.findByEmail(inputData.email);
+
+      await authService.deactivateUser(findUser._id);
+
+      try {
+        await request(app).post('/auth/login').send(inputData);
+      } catch (e) {
+        expect(e).toBeInstanceOf(ForbiddenException);
+      }
     });
 
     test('실패: 계정이 존재하지 않음 | 404', async () => {

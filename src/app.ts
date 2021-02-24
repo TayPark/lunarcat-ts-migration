@@ -15,7 +15,7 @@ import indexRouter from './routes/index';
 
 // 유틸리티
 import { connectDatabase } from './lib/database';
-import { logger, stream } from './configs/winston';
+import { stream } from './configs/winston';
 import errorMiddleware from './middlewares/error.mw';
 import swaggerSpec from './configs/apiDocs';
 
