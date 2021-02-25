@@ -4,18 +4,18 @@ import jwt from 'jsonwebtoken';
 
 import { UserEntity } from '../domains/users.entity';
 import { NotFoundException, BadRequestException, ForbiddenException } from '../lib/exceptions';
-import { AuthRepository } from '../repositories/auth.repo';
 import { UserProfileDto } from '../dtos/users.dto';
+import { UsersRepository } from '../repositories/users.repo';
 
 class UsersService {
-  private readonly authRepository: AuthRepository;
+  private readonly usersRepository: UsersRepository;
 
-  constructor(authRepository: AuthRepository) {
-    this.authRepository = authRepository;
+  constructor(usersRepository: UsersRepository) {
+    this.usersRepository = usersRepository;
   }
 
-  public async getUserProfile(userId: string): Promise<UserEntity> {
-    const findUser: UserEntity = await this.authRepository.findById(userId);
+  public async getUserProfile(userId: string): Promise<Partial<UserEntity>> {
+    const findUser: Partial<UserEntity> = await this.usersRepository.getUserProfile(userId);
 
     if (!findUser) {
       throw new NotFoundException('Cannot find user');
@@ -27,14 +27,14 @@ class UsersService {
   public async postUserProfile(
     userId: string,
     userProfileDto: UserProfileDto
-  ): Promise<UserEntity> {
-    const findUser: UserEntity = await this.authRepository.findById(userId);
+  ): Promise<Partial<UserEntity>> {
+    const findUser: Partial<UserEntity> = await this.usersRepository.getUserProfile(userId);
 
     if (!findUser) {
       throw new NotFoundException('Cannot find user');
     }
 
-    const updateProfile: UserEntity = await this.authRepository.updateUser(userId, userProfileDto);
+    const updateProfile: Partial<UserEntity> = await this.usersRepository.updateUserProfile(userId, userProfileDto);
 
     return updateProfile;
   }
