@@ -1,5 +1,5 @@
 import { model, Schema, Document } from 'mongoose';
-import { User } from '../interfaces/users.interface';
+import { UserEntity } from '../domains/users.entity';
 
 const userImageSchema = {
   origin: {
@@ -19,7 +19,7 @@ const userSchema: Schema = new Schema({
   screenId: { type: String },
   country: { type: Number, default: 0 }, // 0: Korean, 1: Japanese, 2: English, 3: Chinese, 4: Taiwan
   displayLanguage: { type: Number, default: 0 }, // 0: Korean, 1: Japanese, 2: English, 3: Chinese(Simplified), 4: Chinese(Traditional)
-  availableLanguage: { type: [String] },
+  availableLanguage: { type: [String], default: [0] },
   joinDate: { type: Date, required: true, default: Date.now },
   deactivatedAt: { type: Date, default: null },
   termsOfUseAcceptedAt: { type: Date, required: true, default: Date.now },
@@ -33,6 +33,6 @@ const userSchema: Schema = new Schema({
   snsType: { type: String, default: 'normal' },
 });
 
-const userModel = model<User & Document>('User', userSchema);
+const userModel = model<UserEntity & Document>('User', userSchema);
 
 export default userModel;

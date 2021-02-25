@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import randomString from 'random-string';
 
-import { User } from '../../../src/interfaces/users.interface';
+import { UserEntity } from '../../../src/domains/users.entity';
 import {
   BadRequestException,
   ForbiddenException,

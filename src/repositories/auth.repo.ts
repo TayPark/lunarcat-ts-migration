@@ -1,19 +1,19 @@
-import { User } from '../interfaces/users.interface';
+import { UserEntity } from '../domains/users.entity';
 
 export interface AuthRepository {
   // find by
-  findById(userId: string): Promise<User>;
-  findByEmail(email: string): Promise<User>;
-  findByUserDto(userData: Partial<User>): Promise<User>;
-  findBySnsId(snsId: string, snsType: string): Promise<User>;
+  findById(userId: string): Promise<UserEntity>;
+  findByEmail(email: string): Promise<UserEntity>;
+  findByUserDto(userData: Partial<UserEntity>): Promise<UserEntity>;
+  findBySnsId(snsId: string, snsType: string): Promise<UserEntity>;
 
   // default CRUD
-  createUser(createUserDto: Partial<User>): Promise<User>;
-  findAll(): Promise<User[]>;
-  updateUser(userId: string, updateUserDto: Partial<User>): Promise<User>;
-  deleteUser(deleteUserId: string): Promise<User>;
+  createUser(createUserDto: Partial<UserEntity>): Promise<UserEntity>;
+  findAll(): Promise<UserEntity[]>;
+  updateUser(userId: string, updateUserDto: Partial<UserEntity>): Promise<UserEntity>;
+  deleteUser(deleteUserId: string): Promise<UserEntity>;
 
   // etc
-  login(email: string, password: string): Promise<User>;
-  confirmUser(email: string, token: string): Promise<User>;
+  login(email: string, password: string): Promise<UserEntity>;
+  confirmUser(email: string, token: string): Promise<UserEntity>;
 }

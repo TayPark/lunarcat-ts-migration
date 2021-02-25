@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import util from 'util';
 import jwt from 'jsonwebtoken';
 
-import { User } from '../interfaces/users.interface';
+import { UserEntity } from '../domains/users.entity';
 import { NotFoundException, BadRequestException, ForbiddenException } from '../lib/exceptions';
 import { AuthRepository } from '../repositories/auth.repo';
 import { UserProfileDto } from '../dtos/users.dto';
@@ -14,8 +14,8 @@ class UsersService {
     this.authRepository = authRepository;
   }
 
-  public async getUserProfile(userId: string): Promise<User> {
-    const findUser: User = await this.authRepository.findById(userId);
+  public async getUserProfile(userId: string): Promise<UserEntity> {
+    const findUser: UserEntity = await this.authRepository.findById(userId);
 
     if (!findUser) {
       throw new NotFoundException('Cannot find user');
@@ -24,14 +24,14 @@ class UsersService {
     return findUser;
   }
 
-  public async postUserProfile(userId: string, userProfileDto: UserProfileDto): Promise<User> {
-    const findUser: User = await this.authRepository.findById(userId);
+  public async postUserProfile(userId: string, userProfileDto: UserProfileDto): Promise<UserEntity> {
+    const findUser: UserEntity = await this.authRepository.findById(userId);
 
     if (!findUser) {
       throw new NotFoundException('Cannot find user');
     }
 
-    const updateProfile: User = await this.authRepository.updateUser(userId, userProfileDto);
+    const updateProfile: UserEntity = await this.authRepository.updateUser(userId, userProfileDto);
 
     return updateProfile;
   }

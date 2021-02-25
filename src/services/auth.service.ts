@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import util from 'util';
 
-import { User } from '../interfaces/users.interface';
+import { UserEntity } from '../domains/users.entity';
 import { BadRequestException, ForbiddenException } from '../lib/exceptions';
 import { AuthRepository } from '../repositories/auth.repo';
 import { JoinDto, SnsJoinDto } from '../dtos/users.dto';
@@ -17,23 +17,23 @@ class AuthService {
     this.authRepository = authRepository;
   }
 
-  public async findAll(): Promise<User[]> {
-    const users: User[] = await this.authRepository.findAll();
+  public async findAll(): Promise<UserEntity[]> {
+    const users: UserEntity[] = await this.authRepository.findAll();
     return users;
   }
 
-  public async findById(userId: string): Promise<User> {
-    const findUser: User = await this.authRepository.findById(userId);
+  public async findById(userId: string): Promise<UserEntity> {
+    const findUser: UserEntity = await this.authRepository.findById(userId);
     return findUser;
   }
 
-  public async findByEmail(userEmail: string): Promise<User> {
-    const findUser: User = await this.authRepository.findByEmail(userEmail);
+  public async findByEmail(userEmail: string): Promise<UserEntity> {
+    const findUser: UserEntity = await this.authRepository.findByEmail(userEmail);
     return findUser;
   }
 
-  public async login(email: string, password: string): Promise<User> {
-    const findUser: User = await this.authRepository.findByEmail(email);
+  public async login(email: string, password: string): Promise<UserEntity> {
+    const findUser: UserEntity = await this.authRepository.findByEmail(email);
 
     if (!findUser) {
       throw new BadRequestException('Cannot find user');
@@ -58,8 +58,8 @@ class AuthService {
     }
   }
 
-  public async createUser(userData: JoinDto): Promise<User> {
-    const findUser: User = await this.authRepository.findByEmail(userData.email);
+  public async createUser(userData: JoinDto): Promise<UserEntity> {
+    const findUser: UserEntity = await this.authRepository.findByEmail(userData.email);
 
     if (findUser) {
       throw new BadRequestException(`Duplicated email ${userData.email}`);
@@ -85,7 +85,7 @@ class AuthService {
 
     const authToken = cryptedPassword.toString('hex').slice(0, 24);
 
-    const createUser: User = await this.authRepository.createUser({
+    const createUser: UserEntity = await this.authRepository.createUser({
       email: userData.email,
       nickname: userData.userNick,
       screenId: generatedId,
@@ -98,7 +98,7 @@ class AuthService {
     return createUser;
   }
 
-  public async createSnsUser(snsJoinData: SnsJoinDto): Promise<User> {
+  public async createSnsUser(snsJoinData: SnsJoinDto): Promise<UserEntity> {
     const generateId: string = crypto
       .createHash('sha256')
       .update(snsJoinData.email)
@@ -127,7 +127,7 @@ class AuthService {
     return createUser;
   }
 
-  public async updateUser(userId: string, userData: Partial<User>): Promise<User> {
+  public async updateUser(userId: string, userData: Partial<UserEntity>): Promise<UserEntity> {
     if (!userId || !userData) {
       throw new BadRequestException('User id and data required');
     }
@@ -141,8 +141,8 @@ class AuthService {
     return updateUserData;
   }
 
-  public async deleteUser(userId: string): Promise<User> {
-    const deleteUser: User = await this.authRepository.deleteUser(userId);
+  public async deleteUser(userId: string): Promise<UserEntity> {
+    const deleteUser: UserEntity = await this.authRepository.deleteUser(userId);
 
     if (!deleteUser) {
       throw new BadRequestException('Cannot find user');
@@ -152,7 +152,7 @@ class AuthService {
   }
 
   public async changePassword(email: string, userPwNew: string) {
-    const findUser: User = await this.findByEmail(email);
+    const findUser: UserEntity = await this.findByEmail(email);
 
     if (!findUser) {
       throw new BadRequestException('Cannot find user');
@@ -170,7 +170,7 @@ class AuthService {
   }
 
   public async confirmUser(email: string, token: string): Promise<boolean> {
-    const findUser: User = await this.authRepository.findByEmail(email);
+    const findUser: UserEntity = await this.authRepository.findByEmail(email);
 
     if (!findUser) {
       throw new BadRequestException('Cannot find user');
@@ -196,8 +196,8 @@ class AuthService {
     return true;
   }
 
-  public async findBySnsId(snsId: string, snsType: string): Promise<User> {
-    const findUser: User = await this.authRepository.findBySnsId(snsId, snsType);
+  public async findBySnsId(snsId: string, snsType: string): Promise<UserEntity> {
+    const findUser: UserEntity = await this.authRepository.findBySnsId(snsId, snsType);
 
     return findUser;
   }

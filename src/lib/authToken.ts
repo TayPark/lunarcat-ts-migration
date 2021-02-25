@@ -1,7 +1,7 @@
-import { User } from '../interfaces/users.interface';
+import { UserEntity } from '../domains/users.entity';
 import jwt from 'jsonwebtoken';
 
-export const jwtTokenMaker = (userData: Partial<User>, SECRET_KEY: string, EXPIRES_IN: string) => {
+export const jwtTokenMaker = (userData: Partial<UserEntity>, SECRET_KEY: string, EXPIRES_IN: string) => {
   return jwt.sign(
     {
       nick: userData.nickname,

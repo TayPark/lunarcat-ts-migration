@@ -15,7 +15,7 @@ import {
 } from '../dtos/users.dto';
 import AuthService from '../services/auth.service';
 import transporter, { emailText, findPassText } from '../lib/sendMail';
-import { User } from '../interfaces/users.interface';
+import { UserEntity } from '../domains/users.entity';
 import HttpException from '../lib/httpException';
 import { logger } from '../configs/winston';
 import IntResponse from '../lib/response';
@@ -107,7 +107,7 @@ class AuthController {
     const userData: LoginDto = req.body;
 
     try {
-      const targetUser: User = await this.authService.login(userData.email, userData.userPw);
+      const targetUser: UserEntity = await this.authService.login(userData.email, userData.userPw);
 
       const authToken: string = jwtTokenMaker(targetUser, this.SECRET_KEY, this.JWT_EXPIRES_IN);
 
@@ -147,7 +147,7 @@ class AuthController {
     }
 
     try {
-      let findUser: User = await this.authService.findBySnsId(snsId, snsType);
+      let findUser: UserEntity = await this.authService.findBySnsId(snsId, snsType);
 
       if (findUser && findUser.deactivatedAt !== null) {
         return next(new ForbiddenException('Deactivated account'));
@@ -203,7 +203,7 @@ class AuthController {
   public sendMailToFindPassword = async (req: Request, res: Response, next: NextFunction) => {
     const email: string = req.body.email;
 
-    const targetUser: User = await this.authService.findByEmail(email);
+    const targetUser: UserEntity = await this.authService.findByEmail(email);
 
     if (!targetUser) {
       next(new NotFoundException('User not found'));
@@ -272,16 +272,16 @@ class AuthController {
     }
   };
 
-  private getFbProfile = async uid => {
+  private getFbProfile = async facebookId => {
     try {
       const fbProfileImage = await axios({
-        url: `https://graph.facebook.com/v9.0/${uid}/picture`,
+        url: `https://graph.facebook.com/v9.0/${facebookId}/picture`,
         method: 'GET',
       });
 
       return fbProfileImage;
     } catch (e) {
-      console.error(`Getting profile for facebook login failed`);
+      console.error(`Getting profile for facebook failed`);
       throw new BadRequestException(e);
     }
   };

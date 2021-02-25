@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import randomString from 'random-string';
 
-import { User } from '../../../src/interfaces/users.interface';
+import { UserEntity } from '../../../src/domains/users.entity';
 import {
   BadRequestException,
   ForbiddenException,
@@ -48,7 +48,7 @@ describe('AuthService', () => {
         userLang: 1,
       };
 
-      const result: User = await authService.createUser(userData);
+      const result: UserEntity = await authService.createUser(userData);
 
       expect(result.email).toEqual(userData.email);
     });
@@ -83,14 +83,14 @@ describe('AuthService', () => {
         userLang: 1,
       };
 
-      const createUser: User = await authService.createUser(userData);
-      const findUser: User = await authService.findById(createUser._id);
+      const createUser: UserEntity = await authService.createUser(userData);
+      const findUser: UserEntity = await authService.findById(createUser._id);
 
       expect(createUser._id).toEqual(findUser._id);
     });
 
     test('실패: 존재하지 않음', async () => {
-      const findUser: User = await authService.findById('012345678901234567891234');
+      const findUser: UserEntity = await authService.findById('012345678901234567891234');
 
       expect(findUser).toBeFalsy();
     });
@@ -107,14 +107,14 @@ describe('AuthService', () => {
         userLang: 1,
       };
 
-      const createUser: User = await authService.createUser(userData);
-      const findUser: User = await authService.findByEmail(createUser.email);
+      const createUser: UserEntity = await authService.createUser(userData);
+      const findUser: UserEntity = await authService.findByEmail(createUser.email);
 
       expect(createUser._id).toEqual(findUser._id);
     });
 
     test('실패: 존재하지 않음', async () => {
-      const findUser: User = await authService.findByEmail(randomString() + '@email.com');
+      const findUser: UserEntity = await authService.findByEmail(randomString() + '@email.com');
 
       expect(findUser).toBeFalsy();
     });
@@ -131,8 +131,8 @@ describe('AuthService', () => {
         userLang: 1,
       };
 
-      const createUser: User = await authService.createUser(userData);
-      const findUser: User = await authService.findByEmail(createUser.email);
+      const createUser: UserEntity = await authService.createUser(userData);
+      const findUser: UserEntity = await authService.findByEmail(createUser.email);
 
       expect(createUser._id).toEqual(findUser._id);
     });
@@ -194,22 +194,22 @@ describe('AuthService', () => {
         userLang: 1,
       };
 
-      const updatable: Partial<User> = {
+      const updatable: Partial<UserEntity> = {
         intro: 'Hello my dear',
         screenId: 'everytime',
         displayLanguage: 0,
       };
 
-      const createUser: User = await authService.createUser(userData);
+      const createUser: UserEntity = await authService.createUser(userData);
       await authService.updateUser(createUser._id, updatable);
-      const updateUser: User = await authService.findByEmail(userData.email);
+      const updateUser: UserEntity = await authService.findByEmail(userData.email);
 
       expect(createUser._id).toEqual(updateUser._id);
       expect(updateUser.intro).toEqual(updatable.intro);
     });
 
     test('실패: 존재하지 않는 유저 Id', async () => {
-      const updatable: Partial<User> = {
+      const updatable: Partial<UserEntity> = {
         intro: 'Hello my dear',
         screenId: 'everytime',
         displayLanguage: 0,
@@ -238,7 +238,7 @@ describe('AuthService', () => {
         // displayLanguage: 0
       };
 
-      const createUser: User = await authService.createUser(userData);
+      const createUser: UserEntity = await authService.createUser(userData);
 
       try {
         await authService.updateUser(createUser._id, updatable);
@@ -259,13 +259,13 @@ describe('AuthService', () => {
         userLang: 1,
       };
 
-      const createUser: User = await authService.createUser(userData);
+      const createUser: UserEntity = await authService.createUser(userData);
 
       const newPassword = randomString();
 
       await authService.changePassword(userData.email, newPassword);
 
-      const loginUser: User = await authService.login(userData.email, newPassword);
+      const loginUser: UserEntity = await authService.login(userData.email, newPassword);
 
       expect(loginUser.password).not.toBe(createUser.password);
     });
@@ -303,7 +303,7 @@ describe('AuthService', () => {
         userLang: 1,
       };
 
-      const createUser: User = await authService.createUser(userData);
+      const createUser: UserEntity = await authService.createUser(userData);
       await authService.deleteUser(createUser._id);
 
       try {
@@ -333,9 +333,9 @@ describe('AuthService', () => {
         userLang: 1,
       };
 
-      const createUser: User = await authService.createUser(userData);
+      const createUser: UserEntity = await authService.createUser(userData);
       await authService.confirmUser(userData.email, createUser.token);
-      const confirmUser: User = await authService.findByEmail(userData.email);
+      const confirmUser: UserEntity = await authService.findByEmail(userData.email);
 
       expect(confirmUser.isConfirmed).toBe(true);
       expect(confirmUser.token).toBe(null);
@@ -351,7 +351,7 @@ describe('AuthService', () => {
         userLang: 1,
       };
 
-      const createUser: User = await authService.createUser(userData);
+      const createUser: UserEntity = await authService.createUser(userData);
 
       try {
         await authService.confirmUser(randomString() + '@email.com', createUser.token);
@@ -370,7 +370,7 @@ describe('AuthService', () => {
         userLang: 1,
       };
 
-      const createUser: User = await authService.createUser(userData);
+      const createUser: UserEntity = await authService.createUser(userData);
       await authService.confirmUser(userData.email, createUser.token);
 
       try {
@@ -390,7 +390,7 @@ describe('AuthService', () => {
         userLang: 1,
       };
 
-      const createUser: User = await authService.createUser(userData);
+      const createUser: UserEntity = await authService.createUser(userData);
 
       try {
         await authService.confirmUser(userData.email, randomString());
@@ -411,7 +411,7 @@ describe('AuthService', () => {
         snsType: SnsType.GOOGLE,
       };
 
-      const createUser: User = await authService.createSnsUser(snsJoinData);
+      const createUser: UserEntity = await authService.createSnsUser(snsJoinData);
 
       expect(createUser).toBeDefined();
       expect(createUser.email).toBe(snsJoinData.email);
@@ -446,17 +446,17 @@ describe('AuthService', () => {
         snsType: SnsType.GOOGLE,
       };
 
-      const createUser: User = await authService.createSnsUser(snsJoinData);
+      const createUser: UserEntity = await authService.createSnsUser(snsJoinData);
 
       expect(createUser).toBeDefined();
 
-      const findUser: User = await authService.findBySnsId(snsJoinData.uid, snsJoinData.snsType);
+      const findUser: UserEntity = await authService.findBySnsId(snsJoinData.uid, snsJoinData.snsType);
 
       expect(findUser).toBeDefined();
     });
 
     test('실패: 존재하지 않음', async () => {
-      const findUser: User = await authService.findBySnsId('12345678901234561', SnsType.GOOGLE);
+      const findUser: UserEntity = await authService.findBySnsId('12345678901234561', SnsType.GOOGLE);
 
       expect(findUser).toBeFalsy();
     });

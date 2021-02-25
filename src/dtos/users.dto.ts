@@ -1,132 +1,69 @@
-import { IsBoolean, IsEmail, IsNumber, IsObject, IsString } from 'class-validator';
 import { SnsType } from './global.enums';
 
-export class JoinDto {
-  @IsEmail()
-  public email: string;
-
-  @IsString()
-  public userPw: string;
-
-  @IsString()
-  public userPwRe: string;
-
-  @IsNumber()
-  public userLang: number;
-
-  @IsString()
-  public userNick: string;
+export interface JoinDto {
+  email: string;
+  userPw: string;
+  userPwRe: string;
+  userLang: number;
+  userNick: string;
 }
 
-export class UpdateUserDto {
-  @IsString()
-  public screenId?: string;
-
-  @IsString()
-  public intro?: string;
-
-  @IsString()
-  public nickname?: string;
-
-  public banner?: object;
-
-  public profile?: object;
+export interface UpdateUserDto {
+  screenId?: string;
+  intro?: string;
+  nickname?: string;
+  banner?: object;
+  profile?: object;
 }
 
-export class LoginDto {
-  @IsEmail()
-  public email: string;
-
-  @IsString()
-  public userPw: string;
+export interface LoginDto {
+  email: string;
+  userPw: string;
 }
 
-export class ChangePasswordDto {
-  @IsEmail()
-  public email: string;
-
-  @IsString()
-  public userPwNew: string;
-
-  @IsString()
-  public userPwNewRe: string;
-
-  @IsString()
-  public token: string;
+export interface ChangePasswordDto {
+  email: string;
+  userPwNew: string;
+  userPwNewRe: string;
+  token: string;
 }
 
-export class SnsJoinDto {
-  @IsString()
-  public uid: string;
-
-  @IsEmail()
-  public email: string;
-
-  @IsString()
-  public profile: string;
-
-  @IsString()
-  public name: string;
-
-  @IsNumber()
-  public displayLanguage: number;
-
-  @IsString()
-  public snsType: SnsType;
+export interface SnsJoinDto {
+  uid: string;
+  email: string;
+  profile: string;
+  name: string;
+  displayLanguage: number;
+  snsType: SnsType;
 }
 
-export class SnsLoginDto {
-  public snsData: GoogleLoginDto | FacebookLoginDto;
-
-  @IsString()
-  public snsType: SnsType;
-
-  @IsString()
-  public userLang: number;
+export interface SnsLoginDto {
+  snsData: GoogleLoginDto | FacebookLoginDto;
+  snsType: SnsType;
+  userLang: number;
 }
 
-export class GoogleLoginDto {
+export interface GoogleLoginDto {
   profileObj: GoogleProfileDto;
 }
 
-export class FacebookLoginDto {
-  @IsString()
+export interface FacebookLoginDto {
   id: string;
-
-  @IsEmail()
   email: string;
-
-  @IsString()
   name: string;
 }
 
-export class GoogleProfileDto {
-  @IsString()
+export interface GoogleProfileDto {
   googleId: string;
-
-  @IsEmail()
   email: string;
-
-  @IsString()
   imageUrl: string;
-
-  @IsString()
   name: string;
 }
 
-export class UserProfileDto {
-  @IsString()
-  public screenId?: string;
-
-  @IsString()
-  public intro?: string;
-
-  @IsNumber()
-  public displayLanguage?: number;
-
-  @IsObject()
-  public banner?: object;
-
-  @IsObject()
-  public profile?: object;
+export interface UserProfileDto {
+  screenId?: string;
+  intro?: string;
+  displayLanguage?: number;
+  banner?: object;
+  profile?: object;
 }

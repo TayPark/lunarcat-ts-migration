@@ -8,7 +8,7 @@ import { connectDatabase } from '../../../src/lib/database';
 import { ChangePasswordDto, JoinDto, SnsLoginDto } from '../../../src/dtos/users.dto';
 import AuthService from '../../../src/services/auth.service';
 import MongoAuthRepository from '../../../src/repositories/mongo.auth.repo';
-import { User } from '../../../src/interfaces/users.interface';
+import { UserEntity } from '../../../src/domains/users.entity';
 import {
   BadRequestException,
   ForbiddenException,
@@ -121,7 +121,7 @@ describe('/auth', () => {
       };
 
       await request(app).post('/auth/join').send(inputData).expect(201);
-      const createUser: User = await authService.findByEmail(inputData.email);
+      const createUser: UserEntity = await authService.findByEmail(inputData.email);
       await request(app)
         .post('/auth/mailAuth')
         .send({ email: inputData.email, token: createUser.token });
@@ -157,7 +157,7 @@ describe('/auth', () => {
 
       await request(app).post('/auth/join').send(inputData).expect(201);
 
-      const findUser: User = await authService.findByEmail(inputData.email);
+      const findUser: UserEntity = await authService.findByEmail(inputData.email);
 
       await authService.deactivateUser(findUser._id);
 
@@ -288,11 +288,11 @@ describe('/auth', () => {
 
       await request(app).post('/auth/join').send(inputData).expect(201);
 
-      const findUser: User = await authService.findByEmail(inputData.email);
+      const findUser: UserEntity = await authService.findByEmail(inputData.email);
 
       await request(app).post('/auth/findPass').send({ email: inputData.email }).expect(200);
 
-      const findAfterEmailSent: User = await authService.findByEmail(inputData.email);
+      const findAfterEmailSent: UserEntity = await authService.findByEmail(inputData.email);
 
       expect(findUser.token).not.toEqual(findAfterEmailSent.token);
     });
@@ -328,7 +328,7 @@ describe('/auth', () => {
 
       await request(app).post('/auth/join').send(inputData).expect(201);
 
-      const findUser: User = await authService.findByEmail(inputData.email);
+      const findUser: UserEntity = await authService.findByEmail(inputData.email);
       const newPass: string = '1q2w3e4r!!';
       const newPassData: ChangePasswordDto = {
         email: inputData.email,
@@ -351,7 +351,7 @@ describe('/auth', () => {
 
       await request(app).post('/auth/join').send(inputData).expect(201);
 
-      const findUser: User = await authService.findByEmail(inputData.email);
+      const findUser: UserEntity = await authService.findByEmail(inputData.email);
       const newPass: string = randomString({ length: 5 });
       const newPassData: ChangePasswordDto = {
         email: randomString(),
@@ -378,7 +378,7 @@ describe('/auth', () => {
 
       await request(app).post('/auth/join').send(inputData).expect(201);
 
-      const findUser: User = await authService.findByEmail(inputData.email);
+      const findUser: UserEntity = await authService.findByEmail(inputData.email);
       const newPass: string = randomString({ length: 5 });
       const newPassData: ChangePasswordDto = {
         email: inputData.email,
@@ -405,7 +405,7 @@ describe('/auth', () => {
 
       await request(app).post('/auth/join').send(inputData).expect(201);
 
-      const findUser: User = await authService.findByEmail(inputData.email);
+      const findUser: UserEntity = await authService.findByEmail(inputData.email);
       const newPassData: ChangePasswordDto = {
         email: inputData.email,
         userPwNew: randomString({ length: 20 }),
@@ -432,7 +432,7 @@ describe('/auth', () => {
       };
 
       await request(app).post('/auth/join').send(inputData).expect(201);
-      const findUser: User = await authService.findByEmail(inputData.email);
+      const findUser: UserEntity = await authService.findByEmail(inputData.email);
 
       await request(app)
         .get(`/auth/mailAuth?email=${inputData.email}&token=${findUser.token}`)
