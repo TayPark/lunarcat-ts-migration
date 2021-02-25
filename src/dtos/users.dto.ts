@@ -67,3 +67,11 @@ export interface UserProfileDto {
   banner?: object;
   profile?: object;
 }
+
+export interface UserTokenDto {
+  _id: string;
+  isConfirmed: boolean;
+  isAdmin: boolean;
+  iat: number;
+  exp: number;
+}

@@ -28,11 +28,7 @@ class AuthController {
   public authService: AuthService = new AuthService(new MongoAuthRepository());
 
   private SECRET_KEY = process.env.SECRET_KEY;
-  private EXEC_NUM = parseInt(process.env.EXEC_NUM, 10);
-  private RESULT_LENGTH = parseInt(process.env.RESULT_LENGTH, 10);
-  private JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN;
   private MAIL_USER = process.env.MAIL_USER;
-
   private randomBytes = util.promisify(crypto.randomBytes);
 
   /**
@@ -109,7 +105,7 @@ class AuthController {
     try {
       const targetUser: UserEntity = await this.authService.login(userData.email, userData.userPw);
 
-      const authToken: string = jwtTokenMaker(targetUser, this.SECRET_KEY, this.JWT_EXPIRES_IN);
+      const authToken: string = await jwtTokenMaker(targetUser);
 
       const responseData = {
         authToken,
@@ -118,6 +114,12 @@ class AuthController {
         displayLanguage: targetUser.screenId,
       };
 
+      res.cookie('access_token', authToken, {
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production' ? true : false,
+        domain: process.env.NODE_ENV === 'production' ? '.epiclogue.com' : 'localhost',
+      })
       IntResponse(res, 200, responseData);
     } catch (e) {
       next(e);
@@ -179,7 +181,7 @@ class AuthController {
         findUser = await this.authService.createSnsUser(dataForSnsJoin);
       }
 
-      const authToken = jwtTokenMaker(findUser, this.SECRET_KEY, this.JWT_EXPIRES_IN);
+      const authToken: string = await jwtTokenMaker(findUser);
 
       const responseData = {
         token: authToken,
@@ -187,6 +189,13 @@ class AuthController {
         screenId: findUser.screenId,
         displayLanguage: findUser.screenId,
       };
+
+      res.cookie('access_token', authToken, {
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production' ? true : false,
+        domain: process.env.NODE_ENV === 'production' ? '.epiclogue.com' : 'localhost',
+      })
 
       IntResponse(res, 200, responseData);
     } catch (e) {

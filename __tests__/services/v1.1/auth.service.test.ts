@@ -450,13 +450,19 @@ describe('AuthService', () => {
 
       expect(createUser).toBeDefined();
 
-      const findUser: UserEntity = await authService.findBySnsId(snsJoinData.uid, snsJoinData.snsType);
+      const findUser: UserEntity = await authService.findBySnsId(
+        snsJoinData.uid,
+        snsJoinData.snsType
+      );
 
       expect(findUser).toBeDefined();
     });
 
     test('실패: 존재하지 않음', async () => {
-      const findUser: UserEntity = await authService.findBySnsId('12345678901234561', SnsType.GOOGLE);
+      const findUser: UserEntity = await authService.findBySnsId(
+        '12345678901234561',
+        SnsType.GOOGLE
+      );
 
       expect(findUser).toBeFalsy();
     });

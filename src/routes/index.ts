@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 
 import authRouter from './auth.route';
-// import usersRouter from './user';
+import usersRouter from './users.route';
 // import boardRouter from './board';
 // import searchRouter from './search';
 // import suggestRouter from './suggest';
@@ -15,7 +15,7 @@ indexRouter.get('/', (req: Request, res: Response) => {
   res.status(200).json({ result: 'ok', message: 'server is ok' });
 });
 indexRouter.use('/auth', authRouter);
-// indexRouter.use('/user', usersRouter);
+indexRouter.use('/users', usersRouter);
 // indexRouter.use('/boards', boardRouter);
 // indexRouter.use('/interaction', interactionRouter);
 // indexRouter.use('/search', searchRouter);

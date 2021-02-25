@@ -1,8 +1,10 @@
 import 'dotenv/config';
-import createError from 'http-errors';
-import jwt from 'jsonwebtoken';
 import Joi from 'joi';
 import { Request, Response, NextFunction } from 'express';
+import { UserTokenDto } from '../dtos/users.dto';
+import { UnauthorizedException } from '../lib/exceptions';
+import { jwtTokenVerifier } from '../lib/authToken';
+import HttpException from '../lib/httpException';
 
 // 예외 페이지들에 대한 route stack의 마지막 async function의 이름을 저장합니다.
 const authExceptions = [
@@ -18,8 +20,6 @@ const authExceptions = [
   'getReplys', // 대댓글 확인
 ];
 
-const { SECRET_KEY } = process.env;
-
 /**
  * @description JWT토큰으로 유저 인증 수행
  * @param {*} req HTTP request
@@ -28,7 +28,8 @@ const { SECRET_KEY } = process.env;
  */
 export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const clientToken = req.headers['x-access-token'];
+    const { access_token: clientToken } = req.cookies;
+
     const { name: accessPath } = req.route.stack[req.route.stack.length - 1];
 
     if (!clientToken && authExceptions.includes(accessPath)) {
@@ -49,36 +50,39 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
     try {
       await tokenSchema.validateAsync({ token: clientToken });
     } catch (e) {
-      console.log(
-        `[INFO] 인증 실패: 유저의 토큰이 누락되었거나 적절하지 않습니다. ip: ${
-          req.headers['x-forwarded-for'] || req.socket.remoteAddress
-        } token: ${clientToken}`
+      return next(
+        new UnauthorizedException(
+          `Not a token ${clientToken} from ${
+            req.headers['x-forwarded-for'] || req.socket.remoteAddress
+          }`
+        )
       );
-      return next(createError(401, '인증 실패: 적절하지 않은 인증입니다.'));
     }
 
-    let decoded;
+    let decoded: string | object;
 
     try {
-      decoded = await jwt.verify(clientToken, SECRET_KEY);
+      decoded = await jwtTokenVerifier(clientToken);
     } catch (e) {
       console.log(
         `[INFO] 인증 실패: 손상된 토큰을 사용하였습니다. ip: ${
           req.headers['x-forwarded-for'] || req.socket.remoteAddress
         } token: ${clientToken}`
       );
-      return next(createError(401, '인증 실패: 적절하지 않은 인증입니다.'));
+      return next(new UnauthorizedException(`Broken access token ${clientToken} from ${
+        req.headers['x-forwarded-for'] || req.socket.remoteAddress
+      }`));
     }
 
     if (decoded) {
-      if (decoded.isConfirmed) {
-        res.locals.uid = decoded.uid;
+      if ((decoded as UserTokenDto).isConfirmed) {
+        res.locals.user = (decoded as UserTokenDto);
         next();
       } else {
         console.log(
-          `[INFO] 인증 실패: 유저 ${decoded.uid} 가 로그인을 시도했으나 이메일 인증이 완료되지 않았습니다.`
+          `[INFO] 인증 실패: 유저 ${(decoded as UserTokenDto)._id} 가 로그인을 시도했으나 이메일 인증이 완료되지 않았습니다.`
         );
-        return next(createError(401, '이메일 인증이 완료되지 않았습니다.'));
+        return next(new UnauthorizedException('User email is not verified'));
       }
     } else {
       console.log(
@@ -86,10 +90,10 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
           req.headers['x-forwarded-for'] || req.socket.remoteAddress
         } 가 로그인을 시도했으나 토큰의 유효기간이 만료되었거나 토큰이 없습니다.`
       );
-      return next(createError(401, '인증 실패: 적절하지 않은 인증입니다.'));
+      return next(new UnauthorizedException('Unauthorized token'));
     }
   } catch (e) {
     console.error(`[ERROR] ${e}`);
-    return next(createError(500, '알 수 없는 에러가 발생했습니다.'));
+    return next(new HttpException('Unknown exception'));
   }
 };

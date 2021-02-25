@@ -27,7 +27,7 @@ export class UnauthorizedException extends Error {
    */
   message: string;
   status: number = 401;
-  constructor(message: string = 'UnAuthorized') {
+  constructor(message: string = 'Unauthorized') {
     super(message);
     this.message = message;
   }

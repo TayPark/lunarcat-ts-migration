@@ -24,7 +24,10 @@ class UsersService {
     return findUser;
   }
 
-  public async postUserProfile(userId: string, userProfileDto: UserProfileDto): Promise<UserEntity> {
+  public async postUserProfile(
+    userId: string,
+    userProfileDto: UserProfileDto
+  ): Promise<UserEntity> {
     const findUser: UserEntity = await this.authRepository.findById(userId);
 
     if (!findUser) {
