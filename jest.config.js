@@ -15,12 +15,12 @@ module.exports = {
     /* integration testing */
     // "./__tests__/integration/v1.1/*",
     "./__tests__/integration/v1.1/index.test.ts",
-    // "./__tests__/integration/v1.1/auth.test.ts",
+    "./__tests__/integration/v1.1/auth.test.ts",
 
     /* service testing */
     // "./__tests__/services/v1.1/*",
-    // "./__tests__/services/v1.1/auth.service.test.ts",
-    "./__tests__/services/v1.1/users.service.test.ts",
+    "./__tests__/services/v1.1/auth.service.test.ts",
+    // "./__tests__/services/v1.1/users.service.test.ts",
   ],
 
   // Triggered before all test cases start

@@ -12,8 +12,13 @@ export interface UpdateUserDto {
   screenId?: string;
   intro?: string;
   nickname?: string;
-  banner?: object;
-  profile?: object;
+  banner?: ImageDto;
+  profile?: ImageDto;
+}
+
+export interface ImageDto {
+  origin?: string;
+  thumbnail?: string;
 }
 
 export interface LoginDto {
