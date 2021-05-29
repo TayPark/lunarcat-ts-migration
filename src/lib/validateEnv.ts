@@ -14,7 +14,6 @@ const validateEnv = () => {
     // Database
     MONGO_URI: str(),
     MONGO_URI_ALONE: str(),
-    MONGO_TEST_URI: str(),
     REPLICA_SET_NAME: str(),
 
     // S3

@@ -2,7 +2,7 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
-import cors from 'cors';
+import cors from 'cors';b
 import compression from 'compression';
 import helmet from 'helmet';
 import hpp from 'hpp';
@@ -27,7 +27,7 @@ const app = express();
  */
 if (process.env.NODE_ENV === 'production') {
   app.use(morgan('combined', { stream }));
-} else if (process.env.NODE_ENV === 'development') {
+} else if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
   app.use(morgan('dev', { stream }));
 }
 app.use(cors({ credentials: true, origin: true }));

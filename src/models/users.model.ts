@@ -9,6 +9,7 @@ const userImageSchema = {
   thumbnail: {
     type: String,
     default: null,
+
   },
 };
 

@@ -140,7 +140,9 @@ describe('/auth', () => {
       await request(app).post('/auth/join').send(inputData).expect(201);
 
       const loginResponse = await request(app).post('/auth/login').send(inputData);
-      const { authToken } = loginResponse.body.data;
+      const parsedCookie = loginResponse.headers['set-cookie']
+      const authToken = parsedCookie['set-cookie']
+      console.error(authToken)
       const decoded: any = await jwt.verify(authToken, process.env.SECRET_KEY);
 
       expect(decoded.isConfirmed).toBeFalsy();

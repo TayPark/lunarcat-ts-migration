@@ -31,7 +31,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
     const { access_token: clientToken } = req.cookies;
 
     const { name: accessPath } = req.route.stack[req.route.stack.length - 1];
-
+ 
     if (!clientToken && authExceptions.includes(accessPath)) {
       // 비회원에게 접근이 허용된 페이지
       return next();

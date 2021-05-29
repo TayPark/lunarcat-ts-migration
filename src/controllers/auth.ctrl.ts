@@ -108,7 +108,6 @@ class AuthController {
       const authToken: string = await jwtTokenMaker(targetUser);
 
       const responseData = {
-        authToken,
         nick: targetUser.nickname,
         screenId: targetUser.screenId,
         displayLanguage: targetUser.screenId,
@@ -184,7 +183,6 @@ class AuthController {
       const authToken: string = await jwtTokenMaker(findUser);
 
       const responseData = {
-        token: authToken,
         nick: findUser.nickname,
         screenId: findUser.screenId,
         displayLanguage: findUser.screenId,
